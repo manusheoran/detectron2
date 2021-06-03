@@ -186,6 +186,7 @@ class COCOEvaluator(DatasetEvaluator):
                 tasks.add("segm")
             if "keypoints" in pred:
                 tasks.add("keypoints")
+        tasks = {"bbox"}
         return sorted(tasks)
 
     def _eval_predictions(self, predictions, img_ids=None):
