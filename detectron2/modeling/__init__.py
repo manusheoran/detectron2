@@ -18,6 +18,7 @@ from .meta_arch import (
     GeneralizedRCNN,
     PanopticFPN,
     ProposalNetwork,
+    ProposalNetwork1,
     RetinaNet,
     SemanticSegmentor,
     build_model,
