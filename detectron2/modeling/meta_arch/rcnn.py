@@ -493,8 +493,8 @@ class ProposalNetwork1(nn.Module):
         self.backbone = build_backbone(cfg)
         self.siz_div = build_backbone(cfg).size_divisibility     #fcos_byol
         self.out_shape_original = self.backbone.output_shape()      #fcos_byol
-        #checkpoint = torch.load('/data/nihcc/BYOL/FCOS/norm_cropped_x101/byol_cropped_deeplesion0006.0.pt')     #fcos_byol
-        #self.backbone.load_state_dict(checkpoint)     #fcos_byol
+        checkpoint = torch.load('/data/nihcc/BYOL/FCOS/norm_cropped_x101/byol_cropped_deeplesion000105.0.pt')     #fcos_byol
+        self.backbone.load_state_dict(checkpoint)     #fcos_byol
         #self.augmentedConv_128 = augmented_conv_128
         self.augmentedConv_64 = augmented_conv_64
         self.augmentedConv_32 = augmented_conv_32
