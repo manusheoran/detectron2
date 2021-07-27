@@ -807,15 +807,24 @@ class ProposalNetwork_DA(nn.Module):
             gt_instances = None
             
         proposals_dict = self.losses(images, features, gt_instances , domain_target, lambdas)
-        proposals = proposals_dict["proposals_dict"]
-        proposal_losses = { 
-            "proposal_losses": proposals_dict["proposal_losses"],
-            "loss_p3": proposals_dict["loss_p3"],
-            "loss_p4": proposals_dict["loss_p4"],
-            "loss_p5": proposals_dict["loss_p5"],
-            "loss_p6": proposals_dict["loss_p6"],
-            "loss_p7": proposals_dict["loss_p7"]
+        if not domain_target:
+            proposals = proposals_dict["proposals_dict"]
+            proposal_losses = { 
+                "proposal_losses": proposals_dict["proposal_losses"],
+                "loss_p3": proposals_dict["loss_p3"],
+                "loss_p4": proposals_dict["loss_p4"],
+                "loss_p5": proposals_dict["loss_p5"],
+                "loss_p6": proposals_dict["loss_p6"],
+                "loss_p7": proposals_dict["loss_p7"]
+             
+        if domain_target:
             
+            proposal_losses = {
+                "loss_p3": proposals_dict["loss_p3"],
+                "loss_p4": proposals_dict["loss_p4"],
+                "loss_p5": proposals_dict["loss_p5"],
+                "loss_p6": proposals_dict["loss_p6"],
+                "loss_p7": proposals_dict["loss_p7"]
         # In training, the proposals are not useful at all but we generate them anyway.
         # This makes RPN-only models about 5% slower.
         if self.training:
