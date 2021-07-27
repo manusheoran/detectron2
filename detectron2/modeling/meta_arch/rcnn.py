@@ -575,48 +575,48 @@ class ProposalNetwork1(nn.Module):
             processed_results.append({"instances": r})
         return processed_results
 
-class GradientReversalFunction(torch.autograd.Function):
-    """
-    Gradient Reversal Layer from:
-    Unsupervised Domain Adaptation by Backpropagation (Ganin & Lempitsky, 2015)
-    Forward pass is the identity function. In the backward pass,
-    the upstream gradients are multiplied by -lambda (i.e. gradient is reversed)
-    """
+# class GradientReversalFunction(torch.autograd.Function):
+#     """
+#     Gradient Reversal Layer from:
+#     Unsupervised Domain Adaptation by Backpropagation (Ganin & Lempitsky, 2015)
+#     Forward pass is the identity function. In the backward pass,
+#     the upstream gradients are multiplied by -lambda (i.e. gradient is reversed)
+#     """
 
-    @staticmethod
-    def forward(ctx, x, lambda_):
-        ctx.lambda_ = lambda_
-        return x.clone()
+#     @staticmethod
+#     def forward(ctx, x, lambda_):
+#         ctx.lambda_ = lambda_
+#         return x.clone()
 
-    @staticmethod
-    def backward(ctx, grads):
-        lambda_ = ctx.lambda_
-        lambda_ = grads.new_tensor(lambda_)
-        dx = -lambda_ * grads
-        return dx, None
+#     @staticmethod
+#     def backward(ctx, grads):
+#         lambda_ = ctx.lambda_
+#         lambda_ = grads.new_tensor(lambda_)
+#         dx = -lambda_ * grads
+#         return dx, None
 
 
-class GradientReversal(torch.nn.Module):
-    def __init__(self, lambda_=1):
-        super(GradientReversal, self).__init__()
-        self.lambda_ = lambda_
+# class GradientReversal(torch.nn.Module):
+#     def __init__(self, lambda_=1):
+#         super(GradientReversal, self).__init__()
+#         self.lambda_ = lambda_
 
-    def forward(self, x):
-        return GradientReversalFunction.apply(x, self.lambda_)
+#     def forward(self, x):
+#         return GradientReversalFunction.apply(x, self.lambda_)
     
-# class GradReverse(torch.autograd.Function):
-#     @staticmethod
-#     def forward(ctx, x, alpha):
-#         ctx.alpha = alpha
-#         return x.view_as(x)
+class GradReverse(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, alpha):
+        ctx.alpha = alpha
+        return x.view_as(x)
 
-#     @staticmethod
-#     def backward(ctx, grad_output):
-#         output = grad_output.neg() * ctx.alpha
-#         return output, None 
+    @staticmethod
+    def backward(ctx, grad_output):
+        output = grad_output.neg() * ctx.alpha
+        return output, None 
 
 class FCOSDiscriminator(nn.Module):
-    def __init__(self, num_convs=2, in_channels=512, grad_reverse_lambda=-1.0, grl_applied_domain='both'):
+    def __init__(self, num_convs=2, in_channels=256,  grl_applied_domain='both'):
         """
         Arguments:
             in_channels (int): number of channels of the input feature
@@ -651,22 +651,22 @@ class FCOSDiscriminator(nn.Module):
                     torch.nn.init.normal_(l.weight, std=0.01)
                     torch.nn.init.constant_(l.bias, 0)
 
-        self.grad_reverse = GradientReversal(grad_reverse_lambda)
+        #self.grad_reverse = GradientReversal()
         self.loss_fn = nn.BCEWithLogitsLoss()
 
         assert grl_applied_domain == 'both' or grl_applied_domain == 'target'
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, domain='source'):
+    def forward(self, feature, target, domain='source', lambda):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
         if self.grl_applied_domain == 'both':
-            feature = self.grad_reverse(feature)
+            feature = GradReverse.apply(feature,lambda )
         elif self.grl_applied_domain == 'target':
             if domain == 'target':
-                feature = self.grad_reverse(feature)
+                feature = GradReverse.apply(feature, lambda)
         x = self.dis_tower(feature)
         x = self.cls_logits(x)
 
@@ -705,29 +705,19 @@ class ProposalNetwork_DA(nn.Module):
         
         #DA FPN Layers :
         self.dis_P7 = FCOSDiscriminator(
-                num_convs=4,
-                grad_reverse_lambda=0.01,
-                grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both").to(device)
  
         self.dis_P6 = FCOSDiscriminator(
-                        num_convs=4,
-                        grad_reverse_lambda=0.01,
-                        grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both").to(device)
 
         self.dis_P5 = FCOSDiscriminator(
-                        num_convs=4,
-                        grad_reverse_lambda=0.01,
-                        grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both").to(device)
 
         self.dis_P4 = FCOSDiscriminator(
-                        num_convs=4,
-                        grad_reverse_lambda=0.01,
-                        grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both").to(device)
 
         self.dis_P3 = FCOSDiscriminator(
-                        num_convs=4,
-                        grad_reverse_lambda=0.01,
-                        grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both").to(device)
         
         self.proposal_generator = proposal_generator
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
@@ -748,7 +738,7 @@ class ProposalNetwork_DA(nn.Module):
         return self.pixel_mean.device
 
     #DA Loss function
-    def losses(self, anchors, pred_logits, gt_labels, pred_anchor_deltas, gt_boxes, res3, res4, res5, domain_target, alpha3, alpha4, alpha5):
+    def losses(self, anchors, pred_logits, gt_labels, pred_anchor_deltas, gt_boxes, f, domain_target, lambdas):
         """
         Args:
             anchors (list[Boxes]): a list of #feature level Boxes
@@ -765,19 +755,20 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_cls" and "loss_box_reg"
         """
         if domain_target:
-            loss_p7 = self.dis_P7
-            loss_p6 = self.dis_P6
-            loss_p5 = self.dis_P5
-            loss_p4 = self.dis_P4
-            loss_p3 = self.dis_P3
+            loss_p7 = self.dis_P7(f['p7'], 0.0, domain='target') 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, domain='target')
+            loss_p5 = self.dis_P5(f['p5'], 0.0, domain='target')
+            loss_p4 = self.dis_P4(f['p4'], 0.0, domain='target')
+            loss_p3 = self.dis_P3(f['p3'], 0.0, domain='target')
             return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
-            loss_p7 = self.dis_P7
-            loss_p6 = self.dis_P6
-            loss_p5 = self.dis_P5
-            loss_p4 = self.dis_P4
-            loss_p3 = self.dis_P3
+            loss_p7 = self.dis_P7(f['p7'], 1.0, domain='source')
+            loss_p6 = self.dis_P6(f['p6'], 1.0, domain='source')
+            loss_p5 = self.dis_P5(f['p5'], 1.0, domain='source')
+            loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source')
+            loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source')
+            
             return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
 #             loss_res3 = self.discriminatorRes3(res3, domain_target, alpha3)
 #             loss_res4 = self.discriminatorRes4(res4, domain_target, alpha4)
@@ -824,7 +815,7 @@ class ProposalNetwork_DA(nn.Module):
             "loss_r5": loss_res5
         }
     
-    def forward(self, batched_inputs):
+    def forward(self, batched_inputs, domain_target = False, lambdas):
         """
         Args:
             Same as in :class:`GeneralizedRCNN.forward`
