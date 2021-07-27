@@ -18,7 +18,7 @@ from ..proposal_generator import build_proposal_generator
 from ..roi_heads import build_roi_heads
 from .build import META_ARCH_REGISTRY
 
-__all__ = ["GeneralizedRCNN", "ProposalNetwork", "ProposalNetwork1"]
+__all__ = ["GeneralizedRCNN", "ProposalNetwork", "ProposalNetwork1", "ProposalNetwork_DA"]
 
 
 class AugmentedConv(nn.Module):
@@ -573,4 +573,187 @@ class ProposalNetwork1(nn.Module):
             width = input_per_image.get("width", image_size[1])
             r = detector_postprocess(results_per_image, height, width)
             processed_results.append({"instances": r})
+        return processed_results
+
+class GradientReversalFunction(torch.autograd.Function):
+    """
+    Gradient Reversal Layer from:
+    Unsupervised Domain Adaptation by Backpropagation (Ganin & Lempitsky, 2015)
+    Forward pass is the identity function. In the backward pass,
+    the upstream gradients are multiplied by -lambda (i.e. gradient is reversed)
+    """
+
+    @staticmethod
+    def forward(ctx, x, lambda_):
+        ctx.lambda_ = lambda_
+        return x.clone()
+
+    @staticmethod
+    def backward(ctx, grads):
+        lambda_ = ctx.lambda_
+        lambda_ = grads.new_tensor(lambda_)
+        dx = -lambda_ * grads
+        return dx, None
+
+
+class GradientReversal(torch.nn.Module):
+    def __init__(self, lambda_=1):
+        super(GradientReversal, self).__init__()
+        self.lambda_ = lambda_
+
+    def forward(self, x):
+        return GradientReversalFunction.apply(x, self.lambda_)
+    
+# class GradReverse(torch.autograd.Function):
+#     @staticmethod
+#     def forward(ctx, x, alpha):
+#         ctx.alpha = alpha
+#         return x.view_as(x)
+
+#     @staticmethod
+#     def backward(ctx, grad_output):
+#         output = grad_output.neg() * ctx.alpha
+#         return output, None 
+
+class FCOSDiscriminator(nn.Module):
+    def __init__(self, num_convs=2, in_channels=256, grad_reverse_lambda=-1.0, grl_applied_domain='both'):
+        """
+        Arguments:
+            in_channels (int): number of channels of the input feature
+        """
+        super(FCOSDiscriminator, self).__init__()
+
+        dis_tower = []
+        for i in range(num_convs):
+            dis_tower.append(
+                nn.Conv2d(
+                    in_channels,
+                    in_channels,
+                    kernel_size=3,
+                    stride=1,
+                    padding=1
+                )
+            )
+            dis_tower.append(nn.GroupNorm(32, in_channels))
+            dis_tower.append(nn.ReLU())
+
+        self.add_module('dis_tower', nn.Sequential(*dis_tower))
+
+        self.cls_logits = nn.Conv2d(
+            in_channels, 1, kernel_size=3, stride=1,
+            padding=1
+        )
+
+        # initialization
+        for modules in [self.dis_tower, self.cls_logits]:
+            for l in modules.modules():
+                if isinstance(l, nn.Conv2d):
+                    torch.nn.init.normal_(l.weight, std=0.01)
+                    torch.nn.init.constant_(l.bias, 0)
+
+        self.grad_reverse = GradientReversal(grad_reverse_lambda)
+        self.loss_fn = nn.BCEWithLogitsLoss()
+
+        assert grl_applied_domain == 'both' or grl_applied_domain == 'target'
+        self.grl_applied_domain = grl_applied_domain
+
+
+    def forward(self, feature, target, domain='source'):
+        assert target == 0 or target == 1 or target == 0.1 or target == 0.9
+        assert domain == 'source' or domain == 'target'
+
+        if self.grl_applied_domain == 'both':
+            feature = self.grad_reverse(feature)
+        elif self.grl_applied_domain == 'target':
+            if domain == 'target':
+                feature = self.grad_reverse(feature)
+        x = self.dis_tower(feature)
+        x = self.cls_logits(x)
+
+        target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
+        loss = self.loss_fn(x, target)
+
+        return loss
+
+
+@META_ARCH_REGISTRY.register()
+class ProposalNetwork_DA(nn.Module):
+    """
+    A meta architecture that only predicts object proposals.
+    """
+
+    @configurable
+    def __init__(
+        self,
+        *,
+        backbone: Backbone,
+        proposal_generator: nn.Module,
+        pixel_mean: Tuple[float],
+        pixel_std: Tuple[float],
+    ):
+        """
+        Args:
+            backbone: a backbone module, must follow detectron2's backbone interface
+            proposal_generator: a module that generates proposals using backbone features
+            pixel_mean, pixel_std: list or tuple with #channels element, representing
+                the per-channel mean and std to be used to normalize the input image
+        """
+        super().__init__()
+        self.backbone = backbone
+        self.proposal_generator = proposal_generator
+        self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
+        self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
+
+    @classmethod
+    def from_config(cls, cfg):
+        backbone = build_backbone(cfg)
+        return {
+            "backbone": backbone,
+            "proposal_generator": build_proposal_generator(cfg, backbone.output_shape()),
+            "pixel_mean": cfg.MODEL.PIXEL_MEAN,
+            "pixel_std": cfg.MODEL.PIXEL_STD,
+        }
+
+    @property
+    def device(self):
+        return self.pixel_mean.device
+
+    def forward(self, batched_inputs):
+        """
+        Args:
+            Same as in :class:`GeneralizedRCNN.forward`
+        Returns:
+            list[dict]:
+                Each dict is the output for one input image.
+                The dict contains one key "proposals" whose value is a
+                :class:`Instances` with keys "proposal_boxes" and "objectness_logits".
+        """
+        images = [x["image"].to(self.device) for x in batched_inputs]
+        images = [(x - self.pixel_mean) / self.pixel_std for x in images]
+        images = ImageList.from_tensors(images, self.backbone.size_divisibility)
+        features = self.backbone(images.tensor)
+
+        if "instances" in batched_inputs[0]:
+            gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
+        elif "targets" in batched_inputs[0]:
+            log_first_n(
+                logging.WARN, "'targets' in the model inputs is now renamed to 'instances'!", n=10
+            )
+            gt_instances = [x["targets"].to(self.device) for x in batched_inputs]
+        else:
+            gt_instances = None
+        proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
+        # In training, the proposals are not useful at all but we generate them anyway.
+        # This makes RPN-only models about 5% slower.
+        if self.training:
+            return proposal_losses
+
+        processed_results = []
+        for results_per_image, input_per_image, image_size in zip(
+            proposals, batched_inputs, images.image_sizes
+        ):
+            height = input_per_image.get("height", image_size[0])
+            width = input_per_image.get("width", image_size[1])
+            r = detector_postprocess(results_per_image, height, width)
+            processed_results.append({"proposals": r})
         return processed_results
