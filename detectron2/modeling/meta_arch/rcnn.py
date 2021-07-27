@@ -738,7 +738,7 @@ class ProposalNetwork_DA(nn.Module):
         return self.pixel_mean.device
 
     #DA Loss function
-    def losses(self, anchors, pred_logits, gt_labels, pred_anchor_deltas, gt_boxes, f, domain_target, lambdas):
+    def losses(self, images, features, gt_instances , domain_target, lambdas):
         """
         Args:
             anchors (list[Boxes]): a list of #feature level Boxes
@@ -769,50 +769,16 @@ class ProposalNetwork_DA(nn.Module):
             loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source'lambdas['p4'])
             loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source'lambdas['p3'])
             
-            return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
-#             loss_res3 = self.discriminatorRes3(res3, domain_target, alpha3)
-#             loss_res4 = self.discriminatorRes4(res4, domain_target, alpha4)
-#             loss_res5 = self.discriminatorRes5(res5, domain_target, alpha5)
-                
-
-        num_images = len(gt_labels)
-        gt_labels = torch.stack(gt_labels)  # (N, R)
-        anchors = type(anchors[0]).cat(anchors).tensor  # (R, 4)
-        gt_anchor_deltas = [self.box2box_transform.get_deltas(anchors, k) for k in gt_boxes]
-        gt_anchor_deltas = torch.stack(gt_anchor_deltas)  # (N, R, 4)
-
-        valid_mask = gt_labels >= 0
-        pos_mask = (gt_labels >= 0) & (gt_labels != self.num_classes)
-        num_pos_anchors = pos_mask.sum().item()
-        get_event_storage().put_scalar("num_pos_anchors", num_pos_anchors / num_images)
-        self.loss_normalizer = self.loss_normalizer_momentum * self.loss_normalizer + (
-            1 - self.loss_normalizer_momentum
-        ) * max(num_pos_anchors, 1)
-
-        # classification and regression loss
-        gt_labels_target = F.one_hot(gt_labels[valid_mask], num_classes=self.num_classes + 1)[
-            :, :-1
-        ]  # no loss for the last (background) class
-        loss_cls = sigmoid_focal_loss_jit(
-            cat(pred_logits, dim=1)[valid_mask],
-            gt_labels_target.to(pred_logits[0].dtype),
-            alpha=self.focal_loss_alpha,
-            gamma=self.focal_loss_gamma,
-            reduction="sum",
-        )
-
-        loss_box_reg = smooth_l1_loss(
-            cat(pred_anchor_deltas, dim=1)[pos_mask],
-            gt_anchor_deltas[pos_mask],
-            beta=self.smooth_l1_loss_beta,
-            reduction="sum",
-        )
+        proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
+        
         return {
-            "loss_cls": loss_cls / self.loss_normalizer,
-            "loss_box_reg": loss_box_reg / self.loss_normalizer,
-            "loss_r3": loss_res3,
-            "loss_r4": loss_res4,
-            "loss_r5": loss_res5
+            "proposals": proposals,
+            "proposal_losses": proposal_losses,
+            "loss_p3": loss_p3,
+            "loss_p4": loss_p4,
+            "loss_p5": loss_p5,
+            "loss_p6": loss_p6,
+            "loss_p7": loss_p7
         }
     
     def forward(self, batched_inputs, domain_target = False, lambdas):
@@ -839,7 +805,17 @@ class ProposalNetwork_DA(nn.Module):
             gt_instances = [x["targets"].to(self.device) for x in batched_inputs]
         else:
             gt_instances = None
-        proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
+            
+        proposals_dict = self.losses(images, features, gt_instances , domain_target, lambdas)
+        proposals = proposals_dict["proposals_dict"]
+        proposal_losses = { 
+            "proposal_losses": proposals_dict["proposal_losses"],
+            "loss_p3": proposals_dict["loss_p3"],
+            "loss_p4": proposals_dict["loss_p4"],
+            "loss_p5": proposals_dict["loss_p5"],
+            "loss_p6": proposals_dict["loss_p6"],
+            "loss_p7": proposals_dict["loss_p7"]
+            
         # In training, the proposals are not useful at all but we generate them anyway.
         # This makes RPN-only models about 5% slower.
         if self.training:
