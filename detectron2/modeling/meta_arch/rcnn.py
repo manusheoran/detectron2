@@ -698,19 +698,19 @@ class ProposalNetwork_DA(nn.Module):
         
         #DA FPN Layers :
         self.dis_P7 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both")#.to(device)
  
         self.dis_P6 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both")#.to(device)
 
         self.dis_P5 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both")#.to(device)
 
         self.dis_P4 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both")#.to(device)
 
         self.dis_P3 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both").to(device)
+                num_convs=4, grl_applied_domain="both")#.to(device)
         
         self.proposal_generator = proposal_generator
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
