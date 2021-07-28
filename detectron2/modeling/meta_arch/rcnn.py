@@ -809,6 +809,7 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_p5": proposals_dict["loss_p5"],
                 "loss_p6": proposals_dict["loss_p6"],
                 "loss_p7": proposals_dict["loss_p7"]
+            }
              
         if domain_target:
             proposal_losses = {
@@ -817,6 +818,7 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_p5": proposals_dict["loss_p5"],
                 "loss_p6": proposals_dict["loss_p6"],
                 "loss_p7": proposals_dict["loss_p7"]
+            }
         # In training, the proposals are not useful at all but we generate them anyway.
         # This makes RPN-only models about 5% slower.
         if self.training:
