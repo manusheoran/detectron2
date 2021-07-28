@@ -762,7 +762,7 @@ class ProposalNetwork_DA(nn.Module):
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
-        proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
+        proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
         
         return {
             "proposals": proposals,
