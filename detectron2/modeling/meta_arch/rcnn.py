@@ -651,7 +651,7 @@ class FCOSDiscriminator(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, domain, _lambda ):
+    def forward(self, feature, target, _lambda, domain ):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
@@ -748,19 +748,19 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_cls" and "loss_box_reg"
         """
         if domain_target:
-            loss_p7 = self.dis_P7(f['p7'], 0.0, domain='target',_lambdas['p7']) 
-            loss_p6 = self.dis_P6(f['p6'], 0.0, domain='target',_lambdas['p6'])
-            loss_p5 = self.dis_P5(f['p5'], 0.0, domain='target',_lambdas['p5'])
-            loss_p4 = self.dis_P4(f['p4'], 0.0, domain='target',_lambdas['p4'])
-            loss_p3 = self.dis_P3(f['p3'], 0.0, domain='target',_lambdas['p3'])
+            loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='target') 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='target') 
+            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='target') 
+            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='target') 
+            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='target') 
             return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
-            loss_p7 = self.dis_P7(f['p7'], 1.0, domain='source',_lambdas['p7'])
-            loss_p6 = self.dis_P6(f['p6'], 1.0, domain='source',_lambdas['p6'])
-            loss_p5 = self.dis_P5(f['p5'], 1.0, domain='source',_lambdas['p5'])
-            loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source',_lambdas['p4'])
-            loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source',_lambdas['p3'])
+            loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source') 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source') 
+            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
+            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
+            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
         proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
         
