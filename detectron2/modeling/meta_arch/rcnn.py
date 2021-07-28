@@ -801,7 +801,7 @@ class ProposalNetwork_DA(nn.Module):
             
         proposals_dict = self.losses(images, features, gt_instances , _lambdas, domain_target )
         if not domain_target:
-            proposals = proposals_dict["proposals_dict"]
+            proposals = proposals_dict["proposals"]
             proposal_losses = { 
                 "proposal_losses": proposals_dict["proposal_losses"],
                 "loss_p3": proposals_dict["loss_p3"],
