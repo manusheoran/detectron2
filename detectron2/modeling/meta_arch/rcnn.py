@@ -811,7 +811,6 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_p7": proposals_dict["loss_p7"]
              
         if domain_target:
-            
             proposal_losses = {
                 "loss_p3": proposals_dict["loss_p3"],
                 "loss_p4": proposals_dict["loss_p4"],
