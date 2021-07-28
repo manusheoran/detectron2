@@ -658,7 +658,7 @@ class FCOSDiscriminator(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, domain='source', lambda = None):
+    def forward(self, feature, target, domain, lambda ):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
