@@ -753,7 +753,9 @@ class ProposalNetwork_DA(nn.Module):
             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='target') 
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='target') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='target') 
-            return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
+            proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
+            proposals = {}
+            return proposals, proposal_losses
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
             loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source') 
@@ -765,15 +767,13 @@ class ProposalNetwork_DA(nn.Module):
         print('feature shape fp7 ', f['p7'].shape)
         proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
         
-        return {
-            "proposals": proposals,
-            "proposal_losses": proposal_losses,
-            "loss_p3": loss_p3,
-            "loss_p4": loss_p4,
-            "loss_p5": loss_p5,
-            "loss_p6": loss_p6,
-            "loss_p7": loss_p7
-        }
+        proposal_losses["loss_p3"] = loss_p3
+        proposal_losses["loss_p4"] = loss_p4
+        proposal_losses["loss_p5"] = loss_p5
+        proposal_losses["loss_p6"] = loss_p6
+        proposal_losses["loss_p7"] = loss_p7
+
+        return proposals, proposal_losses  
     
     def forward(self, batched_inputs, _lambdas, domain_target = False ):
         """
@@ -801,26 +801,8 @@ class ProposalNetwork_DA(nn.Module):
         else:
             gt_instances = None
             
-        proposals_dict = self.losses(images, features, gt_instances , _lambdas, domain_target )
-        if not domain_target:
-            proposals = proposals_dict["proposals"]
-            proposal_losses = { 
-                "proposal_losses": proposals_dict["proposal_losses"],
-                "loss_p3": proposals_dict["loss_p3"],
-                "loss_p4": proposals_dict["loss_p4"],
-                "loss_p5": proposals_dict["loss_p5"],
-                "loss_p6": proposals_dict["loss_p6"],
-                "loss_p7": proposals_dict["loss_p7"]
-            }
-             
-        if domain_target:
-            proposal_losses = {
-                "loss_p3": proposals_dict["loss_p3"],
-                "loss_p4": proposals_dict["loss_p4"],
-                "loss_p5": proposals_dict["loss_p5"],
-                "loss_p6": proposals_dict["loss_p6"],
-                "loss_p7": proposals_dict["loss_p7"]
-            }
+        proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
+        
         # In training, the proposals are not useful at all but we generate them anyway.
         # This makes RPN-only models about 5% slower.
         if self.training:
