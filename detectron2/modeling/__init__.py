@@ -19,6 +19,7 @@ from .meta_arch import (
     PanopticFPN,
     ProposalNetwork,
     ProposalNetwork1,
+    ProposalNetwork_DA,
     RetinaNet,
     SemanticSegmentor,
     build_model,
