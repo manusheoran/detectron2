@@ -1,3 +1,4 @@
+
 # Copyright (c) Facebook, Inc. and its affiliates.
 import logging
 import numpy as np
@@ -245,7 +246,6 @@ class GeneralizedRCNN(nn.Module):
         bounding boxes on the original image and up to 20 top-scoring predicted
         object proposals on the original image. Users can implement different
         visualization functions for different models.
-
         Args:
             batched_inputs (list): a list that contains input to the model.
             proposals (list): a list that contains predicted proposals. Both
@@ -280,16 +280,12 @@ class GeneralizedRCNN(nn.Module):
             batched_inputs: a list, batched outputs of :class:`DatasetMapper` .
                 Each item in the list contains the inputs for one image.
                 For now, each item in the list is a dict that contains:
-
                 * image: Tensor, image in (C, H, W) format.
                 * instances (optional): groundtruth :class:`Instances`
                 * proposals (optional): :class:`Instances`, precomputed proposals.
-
                 Other information that's included in the original dicts, such as:
-
                 * "height", "width" (int): the output resolution of the model, used in inference.
                   See :meth:`postprocess` for details.
-
         Returns:
             list[dict]:
                 Each dict is the output for one input image.
@@ -334,7 +330,6 @@ class GeneralizedRCNN(nn.Module):
     ):
         """
         Run inference on the given inputs.
-
         Args:
             batched_inputs (list[dict]): same as in :meth:`forward`
             detected_instances (None or list[Instances]): if not None, it
@@ -344,7 +339,6 @@ class GeneralizedRCNN(nn.Module):
                 The inference will then skip the detection of bounding boxes,
                 and only predict other per-ROI outputs.
             do_postprocess (bool): whether to apply post-processing on the outputs.
-
         Returns:
             When do_postprocess=True, same as in :meth:`forward`.
             Otherwise, a list[Instances] containing raw network outputs.
@@ -444,7 +438,6 @@ class ProposalNetwork(nn.Module):
         """
         Args:
             Same as in :class:`GeneralizedRCNN.forward`
-
         Returns:
             list[dict]:
                 Each dict is the output for one input image.
@@ -580,29 +573,29 @@ class ProposalNetwork1(nn.Module):
 #     Gradient Reversal Layer from:
 #     Unsupervised Domain Adaptation by Backpropagation (Ganin & Lempitsky, 2015)
 #     Forward pass is the identity function. In the backward pass,
-#     the upstream gradients are multiplied by -lambda (i.e. gradient is reversed)
+#     the upstream gradients are multiplied by -_lambda (i.e. gradient is reversed)
 #     """
 
 #     @staticmethod
-#     def forward(ctx, x, lambda_):
-#         ctx.lambda_ = lambda_
+#     def forward(ctx, x, _lambda_):
+#         ctx._lambda_ = _lambda_
 #         return x.clone()
 
 #     @staticmethod
 #     def backward(ctx, grads):
-#         lambda_ = ctx.lambda_
-#         lambda_ = grads.new_tensor(lambda_)
-#         dx = -lambda_ * grads
+#         _lambda_ = ctx._lambda_
+#         _lambda_ = grads.new_tensor(_lambda_)
+#         dx = -_lambda_ * grads
 #         return dx, None
 
 
 # class GradientReversal(torch.nn.Module):
-#     def __init__(self, lambda_=1):
+#     def __init__(self, _lambda_=1):
 #         super(GradientReversal, self).__init__()
-#         self.lambda_ = lambda_
+#         self._lambda_ = _lambda_
 
 #     def forward(self, x):
-#         return GradientReversalFunction.apply(x, self.lambda_)
+#         return GradientReversalFunction.apply(x, self._lambda_)
     
 class GradReverse(torch.autograd.Function):
     @staticmethod
@@ -617,7 +610,6 @@ class GradReverse(torch.autograd.Function):
 
 class FCOSDiscriminator(nn.Module):
     def __init__(self, num_convs=2, in_channels=256,  grl_applied_domain='both'):
-        
         """
         Arguments:
             in_channels (int): number of channels of the input feature
@@ -647,7 +639,6 @@ class FCOSDiscriminator(nn.Module):
 
         # initialization
         for modules in [self.dis_tower, self.cls_logits]:
-            
             for l in modules.modules():
                 if isinstance(l, nn.Conv2d):
                     torch.nn.init.normal_(l.weight, std=0.01)
@@ -658,19 +649,17 @@ class FCOSDiscriminator(nn.Module):
 
         assert grl_applied_domain == 'both' or grl_applied_domain == 'target'
         self.grl_applied_domain = grl_applied_domain
- 
-    
-    def forward(self, feature, target, domain, _lambda):
-        
-  
+
+
+    def forward(self, feature, target, domain, _lambda ):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
         if self.grl_applied_domain == 'both':
-            feature = GradReverse.apply(feature,lambda )
+            feature = GradReverse.apply(feature,_lambda )
         elif self.grl_applied_domain == 'target':
             if domain == 'target':
-                feature = GradReverse.apply(feature, lambda)
+                feature = GradReverse.apply(feature, _lambda)
         x = self.dis_tower(feature)
         x = self.cls_logits(x)
 
@@ -742,7 +731,7 @@ class ProposalNetwork_DA(nn.Module):
         return self.pixel_mean.device
 
     #DA Loss function
-    def losses(self, images, features, gt_instances , domain_target, lambdas):
+    def losses(self, images, features, gt_instances , domain_target, _lambdas):
         """
         Args:
             anchors (list[Boxes]): a list of #feature level Boxes
@@ -759,19 +748,19 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_cls" and "loss_box_reg"
         """
         if domain_target:
-            loss_p7 = self.dis_P7(f['p7'], 0.0, domain='target',lambdas['p7']) 
-            loss_p6 = self.dis_P6(f['p6'], 0.0, domain='target',lambdas['p6'])
-            loss_p5 = self.dis_P5(f['p5'], 0.0, domain='target',lambdas['p5'])
-            loss_p4 = self.dis_P4(f['p4'], 0.0, domain='target',lambdas['p4'])
-            loss_p3 = self.dis_P3(f['p3'], 0.0, domain='target',lambdas['p3'])
+            loss_p7 = self.dis_P7(f['p7'], 0.0, domain='target',_lambdas['p7']) 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, domain='target',_lambdas['p6'])
+            loss_p5 = self.dis_P5(f['p5'], 0.0, domain='target',_lambdas['p5'])
+            loss_p4 = self.dis_P4(f['p4'], 0.0, domain='target',_lambdas['p4'])
+            loss_p3 = self.dis_P3(f['p3'], 0.0, domain='target',_lambdas['p3'])
             return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
-            loss_p7 = self.dis_P7(f['p7'], 1.0, domain='source',lambdas['p7'])
-            loss_p6 = self.dis_P6(f['p6'], 1.0, domain='source',lambdas['p6'])
-            loss_p5 = self.dis_P5(f['p5'], 1.0, domain='source',lambdas['p5'])
-            loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source',lambdas['p4'])
-            loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source',lambdas['p3'])
+            loss_p7 = self.dis_P7(f['p7'], 1.0, domain='source',_lambdas['p7'])
+            loss_p6 = self.dis_P6(f['p6'], 1.0, domain='source',_lambdas['p6'])
+            loss_p5 = self.dis_P5(f['p5'], 1.0, domain='source',_lambdas['p5'])
+            loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source',_lambdas['p4'])
+            loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source',_lambdas['p3'])
             
         proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
         
@@ -785,7 +774,7 @@ class ProposalNetwork_DA(nn.Module):
             "loss_p7": loss_p7
         }
     
-    def forward(self, batched_inputs, lambdas, domain_target = False ):
+    def forward(self, batched_inputs, _lambdas, domain_target = False ):
         """
         Args:
             Same as in :class:`GeneralizedRCNN.forward`
@@ -810,7 +799,7 @@ class ProposalNetwork_DA(nn.Module):
         else:
             gt_instances = None
             
-        proposals_dict = self.losses(images, features, gt_instances , lambdas, domain_target )
+        proposals_dict = self.losses(images, features, gt_instances , _lambdas, domain_target )
         if not domain_target:
             proposals = proposals_dict["proposals_dict"]
             proposal_losses = { 
@@ -843,3 +832,6 @@ class ProposalNetwork_DA(nn.Module):
             r = detector_postprocess(results_per_image, height, width)
             processed_results.append({"proposals": r})
         return processed_results
+
+   
+
