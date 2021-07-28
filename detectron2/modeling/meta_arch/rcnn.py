@@ -764,7 +764,7 @@ class ProposalNetwork_DA(nn.Module):
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
-        print('feature shape fp7 ', f['p7'].shape)
+        #print('feature shape fp7 ', f['p7'].shape)
         proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
         
         proposal_losses["loss_p3"] = loss_p3
@@ -788,7 +788,7 @@ class ProposalNetwork_DA(nn.Module):
         images = [x["image"].to(self.device) for x in batched_inputs]
         images = [(x - self.pixel_mean) / self.pixel_std for x in images]
         images = ImageList.from_tensors(images, self.backbone.size_divisibility)
-        print('input shape', images.tensor.shape)
+        #print('input shape', images.tensor.shape)
         features = self.backbone(images.tensor)
 
         if "instances" in batched_inputs[0]:
