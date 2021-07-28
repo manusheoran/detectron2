@@ -731,7 +731,7 @@ class ProposalNetwork_DA(nn.Module):
         return self.pixel_mean.device
 
     #DA Loss function
-    def losses(self, images, features, gt_instances , domain_target, _lambdas):
+    def losses(self, images, features, gt_instances , _lambdas, domain_target):
         """
         Args:
             anchors (list[Boxes]): a list of #feature level Boxes
