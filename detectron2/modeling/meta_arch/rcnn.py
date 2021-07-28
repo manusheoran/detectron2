@@ -755,19 +755,19 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_cls" and "loss_box_reg"
         """
         if domain_target:
-            loss_p7 = self.dis_P7(f['p7'], 0.0, domain='target', lambdas['p7']) 
-            loss_p6 = self.dis_P6(f['p6'], 0.0, domain='target'lambdas['p6'])
-            loss_p5 = self.dis_P5(f['p5'], 0.0, domain='target'lambdas['p5'])
-            loss_p4 = self.dis_P4(f['p4'], 0.0, domain='target'lambdas['p4'])
-            loss_p3 = self.dis_P3(f['p3'], 0.0, domain='target'lambdas['p3'])
+            loss_p7 = self.dis_P7(f['p7'], 0.0, domain='target',lambdas['p7']) 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, domain='target',lambdas['p6'])
+            loss_p5 = self.dis_P5(f['p5'], 0.0, domain='target',lambdas['p5'])
+            loss_p4 = self.dis_P4(f['p4'], 0.0, domain='target',lambdas['p4'])
+            loss_p3 = self.dis_P3(f['p3'], 0.0, domain='target',lambdas['p3'])
             return {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
-            loss_p7 = self.dis_P7(f['p7'], 1.0, domain='source'lambdas['p7'])
-            loss_p6 = self.dis_P6(f['p6'], 1.0, domain='source'lambdas['p6'])
-            loss_p5 = self.dis_P5(f['p5'], 1.0, domain='source'lambdas['p5'])
-            loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source'lambdas['p4'])
-            loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source'lambdas['p3'])
+            loss_p7 = self.dis_P7(f['p7'], 1.0, domain='source',lambdas['p7'])
+            loss_p6 = self.dis_P6(f['p6'], 1.0, domain='source',lambdas['p6'])
+            loss_p5 = self.dis_P5(f['p5'], 1.0, domain='source',lambdas['p5'])
+            loss_p4 = self.dis_P4(f['p4'], 1.0, domain='source',lambdas['p4'])
+            loss_p3 = self.dis_P3(f['p3'], 1.0, domain='source',lambdas['p3'])
             
         proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
         
