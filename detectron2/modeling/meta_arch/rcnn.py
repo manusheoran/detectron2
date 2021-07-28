@@ -617,6 +617,7 @@ class GradReverse(torch.autograd.Function):
 
 class FCOSDiscriminator(nn.Module):
     def __init__(self, num_convs=2, in_channels=256,  grl_applied_domain='both'):
+        
         """
         Arguments:
             in_channels (int): number of channels of the input feature
@@ -646,6 +647,7 @@ class FCOSDiscriminator(nn.Module):
 
         # initialization
         for modules in [self.dis_tower, self.cls_logits]:
+            
             for l in modules.modules():
                 if isinstance(l, nn.Conv2d):
                     torch.nn.init.normal_(l.weight, std=0.01)
@@ -656,9 +658,11 @@ class FCOSDiscriminator(nn.Module):
 
         assert grl_applied_domain == 'both' or grl_applied_domain == 'target'
         self.grl_applied_domain = grl_applied_domain
-
-
-    def forward(self, feature, target, domain, lambda ):
+ 
+    
+    def forward(self, feature, target, domain, _lambda):
+        
+  
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
