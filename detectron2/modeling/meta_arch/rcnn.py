@@ -658,7 +658,7 @@ class FCOSDiscriminator(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, domain='source', lambda):
+    def forward(self, feature, target, domain='source', lambda = None):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
@@ -781,7 +781,7 @@ class ProposalNetwork_DA(nn.Module):
             "loss_p7": loss_p7
         }
     
-    def forward(self, batched_inputs, domain_target = False, lambdas):
+    def forward(self, batched_inputs, lambdas, domain_target = False ):
         """
         Args:
             Same as in :class:`GeneralizedRCNN.forward`
@@ -806,7 +806,7 @@ class ProposalNetwork_DA(nn.Module):
         else:
             gt_instances = None
             
-        proposals_dict = self.losses(images, features, gt_instances , domain_target, lambdas)
+        proposals_dict = self.losses(images, features, gt_instances , lambdas, domain_target )
         if not domain_target:
             proposals = proposals_dict["proposals_dict"]
             proposal_losses = { 
