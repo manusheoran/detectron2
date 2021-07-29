@@ -785,7 +785,7 @@ class ProposalNetwork_DA(nn.Module):
                 The dict contains one key "proposals" whose value is a
                 :class:`Instances` with keys "proposal_boxes" and "objectness_logits".
         """
-        if _lambdas=None:
+        if _lambdas is None:
             _lambdas['p3']=0.5 
             _lambdas['p4']=0.5
             _lambdas['p5']=0.5
