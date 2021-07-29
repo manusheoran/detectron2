@@ -809,12 +809,12 @@ class ProposalNetwork_DA(nn.Module):
             gt_instances = None
             
         proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
-        print(proposals)
+        #print(proposals)
         # In training, the proposals are not useful at all but we generate them anyway.
         # This makes RPN-only models about 5% slower.
         if self.training:
             return proposal_losses
-        print("\n running after training:")
+        #print("\n running after training:")
         processed_results = []
         for results_per_image, input_per_image, image_size in zip(
             proposals, batched_inputs, images.image_sizes
