@@ -775,7 +775,7 @@ class ProposalNetwork_DA(nn.Module):
 
         return proposals, proposal_losses  
     
-    def forward(self, batched_inputs, _lambdas=None, domain_target = False ):
+    def forward(self, batched_inputs, _lambdas={}, domain_target = False ):
         """
         Args:
             Same as in :class:`GeneralizedRCNN.forward`
@@ -785,7 +785,7 @@ class ProposalNetwork_DA(nn.Module):
                 The dict contains one key "proposals" whose value is a
                 :class:`Instances` with keys "proposal_boxes" and "objectness_logits".
         """
-        if _lambdas is None:
+        if len(_lambdas)==0:
             _lambdas['p3']=0.5 
             _lambdas['p4']=0.5
             _lambdas['p5']=0.5
