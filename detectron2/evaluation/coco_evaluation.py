@@ -135,10 +135,10 @@ class COCOEvaluator(DatasetEvaluator):
         for input, output in zip(inputs, outputs):
             prediction = {"image_id": input["image_id"]}
             print("\n \n output loop testing", output)
-            if "instances" in output:
+            if "proposals" in output: #changed for FCOS_DA to :proposals
                 instances = output["instances"].to(self._cpu_device)
                 prediction["instances"] = instances_to_coco_json(instances, input["image_id"])
-            if "proposals" in output:
+            if "instances" in output: #changed for FCOS_DA to :instances
                 prediction["proposals"] = output["proposals"].to(self._cpu_device)
             if len(prediction) > 1:
                 self._predictions.append(prediction)
