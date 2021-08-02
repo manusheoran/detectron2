@@ -757,21 +757,21 @@ class ProposalNetwork_DA(nn.Module):
             proposals = {}
             return proposals, proposal_losses
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
-#         else:
-#             loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source') 
-#             loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source') 
-#             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
-#             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
-#             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
+        else:
+            loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source') 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source') 
+            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
+            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
+            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
         #print('feature shape fp7 ', f['p7'].shape)
         proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
         
-#         proposal_losses["loss_p3"] = loss_p3
-#         proposal_losses["loss_p4"] = loss_p4
-#         proposal_losses["loss_p5"] = loss_p5
-#         proposal_losses["loss_p6"] = loss_p6
-#         proposal_losses["loss_p7"] = loss_p7
+        proposal_losses["loss_p3"] = loss_p3
+        proposal_losses["loss_p4"] = loss_p4
+        proposal_losses["loss_p5"] = loss_p5
+        proposal_losses["loss_p6"] = loss_p6
+        proposal_losses["loss_p7"] = loss_p7
 
         return proposals, proposal_losses  
     
