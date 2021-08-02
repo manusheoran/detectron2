@@ -748,11 +748,11 @@ class ProposalNetwork_DA(nn.Module):
                 "loss_cls" and "loss_box_reg"
         """
         if domain_target:
-            loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='target') 
-            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='target') 
-            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='target') 
-            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='target') 
-            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='target') 
+            loss_p7 = self.dis_P7(f['p7'], 1.0,_lambdas['p7'], domain='target') 
+            loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='target') 
+            loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='target') 
+            loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
+            loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             proposals = {}
             return proposals, proposal_losses
