@@ -697,20 +697,20 @@ class ProposalNetwork_DA(nn.Module):
         self.backbone = backbone
         
         #DA FPN Layers :
-        self.dis_P7 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+#         self.dis_P7 = FCOSDiscriminator(
+#                 num_convs=4, grl_applied_domain="both")#.to(device)
  
-        self.dis_P6 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+#         self.dis_P6 = FCOSDiscriminator(
+#                 num_convs=4, grl_applied_domain="both")#.to(device)
 
-        self.dis_P5 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+#         self.dis_P5 = FCOSDiscriminator(
+#                 num_convs=4, grl_applied_domain="both")#.to(device)
 
-        self.dis_P4 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+#         self.dis_P4 = FCOSDiscriminator(
+#                 num_convs=4, grl_applied_domain="both")#.to(device)
 
-        self.dis_P3 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+#         self.dis_P3 = FCOSDiscriminator(
+#                 num_convs=4, grl_applied_domain="both")#.to(device)
         
         self.proposal_generator = proposal_generator
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
@@ -808,7 +808,8 @@ class ProposalNetwork_DA(nn.Module):
         else:
             gt_instances = None
             
-        proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
+        #proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
+        proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
         #print(proposals)
         # In training, the proposals are not useful at all but we generate them anyway.
         # This makes RPN-only models about 5% slower.
