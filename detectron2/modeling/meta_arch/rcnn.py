@@ -757,7 +757,7 @@ class ProposalNetwork_DA(nn.Module):
             proposals = {}
             return proposals, proposal_losses
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
-        else:
+#         else:
 #             loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source') 
 #             loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source') 
 #             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
