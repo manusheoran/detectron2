@@ -807,7 +807,7 @@ class ProposalNetwork_DA(nn.Module):
             gt_instances = [x["targets"].to(self.device) for x in batched_inputs]
         else:
             gt_instances = None
-        print("interanl lambdas", _lambdas)
+        #print("interanl lambdas", _lambdas)
         proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
         #proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
         #print(proposals)
