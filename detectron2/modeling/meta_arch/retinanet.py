@@ -331,10 +331,10 @@ class RetinaNet(nn.Module):
             loss_res4 = self.discriminatorRes4(res4, domain_target, alpha4)
             loss_res5 = self.discriminatorRes5(res5, domain_target, alpha5)
             return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
-        else:
-            loss_res3 = self.discriminatorRes3(res3, domain_target, alpha3)
-            loss_res4 = self.discriminatorRes4(res4, domain_target, alpha4)
-            loss_res5 = self.discriminatorRes5(res5, domain_target, alpha5)
+#         else:
+#             loss_res3 = self.discriminatorRes3(res3, domain_target, alpha3)
+#             loss_res4 = self.discriminatorRes4(res4, domain_target, alpha4)
+#             loss_res5 = self.discriminatorRes5(res5, domain_target, alpha5)
 
         num_images = len(gt_labels)
         gt_labels = torch.stack(gt_labels)  # (N, R)
@@ -371,9 +371,9 @@ class RetinaNet(nn.Module):
         return {
             "loss_cls": loss_cls / self.loss_normalizer,
             "loss_box_reg": loss_box_reg / self.loss_normalizer,
-            "loss_r3": loss_res3,
-            "loss_r4": loss_res4,
-            "loss_r5": loss_res5
+#             "loss_r3": loss_res3,
+#             "loss_r4": loss_res4,
+#             "loss_r5": loss_res5
         }
 
     @torch.no_grad()
