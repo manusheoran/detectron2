@@ -655,6 +655,7 @@ class FCOSDiscriminator(nn.Module):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
+        print('inside discri\n', target)
         if self.grl_applied_domain == 'both':
             feature = GradReverse.apply(feature,_lambda )
         elif self.grl_applied_domain == 'target':
