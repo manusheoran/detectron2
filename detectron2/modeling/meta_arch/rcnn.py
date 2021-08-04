@@ -810,14 +810,7 @@ class ProposalNetwork_DA(nn.Module):
         #print('input shape', images.tensor.shape)
         features = self.backbone(images.tensor)
         
-        if domain_target:
-            print('for target p3 sum', features['p3'].sum() )
-            
-        if not domain_target:
-            print('for source p3 sum', features['p3'].sum() )
-
-        if "instances" in batched_inputs[0]:
-            gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
+        
         elif "targets" in batched_inputs[0]:
             log_first_n(
                 logging.WARN, "'targets' in the model inputs is now renamed to 'instances'!", n=10
@@ -827,6 +820,21 @@ class ProposalNetwork_DA(nn.Module):
             gt_instances = None
         #print("interanl lambdas", _lambdas)
         proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
+        
+        if domain_target:
+            print('target image', images.tensor.shape, images.tensor.sum())
+            print('for target p3 and p7 sum', features['p3'].sum(), features['p7'].sum() )
+            print('len of proposals for target', len(proposals))
+            
+        if not domain_target:
+            print('source image', images.tensor.shape, images.tensor.sum())
+            print('for source p3 and p7 sum', features['p3'].sum() , features['p7'].sum() )
+            print('len of proposals for sourec', len(proposals))
+
+        if "instances" in batched_inputs[0]:
+            gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
+        
+        
         #proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
         #print(proposals)
         # In training, the proposals are not useful at all but we generate them anyway.
