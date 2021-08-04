@@ -638,11 +638,11 @@ class FCOSDiscriminator(nn.Module):
         )
 
         # initialization
-        for modules in [self.dis_tower, self.cls_logits]:
-            for l in modules.modules():
-                if isinstance(l, nn.Conv2d):
-                    torch.nn.init.normal_(l.weight, std=0.01)
-                    torch.nn.init.constant_(l.bias, 0)
+#         for modules in [self.dis_tower, self.cls_logits]:
+#             for l in modules.modules():
+#                 if isinstance(l, nn.Conv2d):
+#                     torch.nn.init.normal_(l.weight, std=0.01)
+#                     torch.nn.init.constant_(l.bias, 0)
 
         #self.grad_reverse = GradientReversal()
         self.loss_fn = nn.BCEWithLogitsLoss()
@@ -822,15 +822,15 @@ class ProposalNetwork_DA(nn.Module):
         #print("interanl lambdas", _lambdas)
         proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
         
-        if domain_target:
-            print('target image', images.tensor.shape, images.tensor.sum())
-            print('for target p3 and p7 sum', features['p3'].sum(), features['p7'].sum() )
-            print('len of proposals for target', len(proposals))
+#         if domain_target:
+#             print('target image', images.tensor.shape, images.tensor.sum())
+#             print('for target p3 and p7 sum', features['p3'].sum(), features['p7'].sum() )
+#             print('len of proposals for target', len(proposals))
             
-        if not domain_target:
-            print('source image', images.tensor.shape, images.tensor.sum())
-            print('for source p3 and p7 sum', features['p3'].sum() , features['p7'].sum() )
-            print('len of proposals for sourec', len(proposals))
+#         if not domain_target:
+#             print('source image', images.tensor.shape, images.tensor.sum())
+#             print('for source p3 and p7 sum', features['p3'].sum() , features['p7'].sum() )
+#             print('len of proposals for sourec', len(proposals))
 
         if "instances" in batched_inputs[0]:
             gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
