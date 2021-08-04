@@ -669,7 +669,15 @@ class FCOSDiscriminator(nn.Module):
 
         return loss
 
+dis_P7 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
+ 
+dis_P6 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
 
+dis_P5 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
+
+dis_P4 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
+
+dis_P3 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
 
     
 @META_ARCH_REGISTRY.register()
@@ -698,20 +706,15 @@ class ProposalNetwork_DA(nn.Module):
         self.backbone = backbone
         
         #DA FPN Layers :
-        self.dis_P7 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+        self.dis_P7 = dis_P7
  
-        self.dis_P6 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+        self.dis_P6 = dis_P6
 
-        self.dis_P5 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+        self.dis_P5 = dis_P5
 
-        self.dis_P4 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+        self.dis_P4 = dis_P4
 
-        self.dis_P3 = FCOSDiscriminator(
-                num_convs=4, grl_applied_domain="both")#.to(device)
+        self.dis_P3 = dis_P3
         
         self.proposal_generator = proposal_generator
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
@@ -787,11 +790,11 @@ class ProposalNetwork_DA(nn.Module):
                 :class:`Instances` with keys "proposal_boxes" and "objectness_logits".
         """
         if len(_lambdas)==0:
-            _lambdas['p3']=0.5 
-            _lambdas['p4']=0.5
-            _lambdas['p5']=0.5
-            _lambdas['p6']=0.1
-            _lambdas['p7']=0.1
+            _lambdas['p3']=0.9 #0.5
+            _lambdas['p4']=0.9 #0.5
+            _lambdas['p5']=0.9 #0.5
+            _lambdas['p6']=0.9 #0.1
+            _lambdas['p7']=0.9 #0.1
             
         images = [x["image"].to(self.device) for x in batched_inputs]
         images = [(x - self.pixel_mean) / self.pixel_std for x in images]
