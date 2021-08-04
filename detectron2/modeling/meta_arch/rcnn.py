@@ -810,7 +810,8 @@ class ProposalNetwork_DA(nn.Module):
         #print('input shape', images.tensor.shape)
         features = self.backbone(images.tensor)
         
-        
+        if "instances" in batched_inputs[0]:
+            gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
         elif "targets" in batched_inputs[0]:
             log_first_n(
                 logging.WARN, "'targets' in the model inputs is now renamed to 'instances'!", n=10
