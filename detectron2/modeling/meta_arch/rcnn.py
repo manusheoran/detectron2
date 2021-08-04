@@ -759,6 +759,10 @@ class ProposalNetwork_DA(nn.Module):
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             proposals = {}
+            for name, layer in self.dis_P3.named_modules():
+                if isinstance(layer, nn.Conv2d):
+                    if '.0' in name:
+                        print('for target',name, layer.weight.sum())
             return proposals, proposal_losses
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
@@ -767,6 +771,10 @@ class ProposalNetwork_DA(nn.Module):
             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
+            for name, layer in self.dis_P3.named_modules():
+                if isinstance(layer, nn.Conv2d):
+                    if '.0' in name:
+                        print('for source',name, layer.weight.sum())
             
         #print('feature shape fp7 ', f['p7'].shape)
         proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
