@@ -671,13 +671,13 @@ class FCOSDiscriminator(nn.Module):
 
 #dis_P7 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)    #not p7 
  
-dis_P6 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
+dis_P6 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
 
-dis_P5 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
+dis_P5 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
 
-dis_P4 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
+dis_P4 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
 
-dis_P3 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
+dis_P3 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)
 
     
 @META_ARCH_REGISTRY.register()
