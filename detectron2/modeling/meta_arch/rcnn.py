@@ -671,7 +671,7 @@ class FCOSDiscriminator(nn.Module):
 
 #dis_P7 = FCOSDiscriminator(num_convs=3, grl_applied_domain="both")#.to(device)    #not p7 
  
-#dis_P6 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)    #not p6 
+dis_P6 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)    #not p6 
 
 dis_P5 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
@@ -708,7 +708,7 @@ class ProposalNetwork_DA(nn.Module):
         #DA FPN Layers :
         #self.dis_P7 = dis_P7    #not p7 
  
-        #self.dis_P6 = dis_P6     #not p6 
+        self.dis_P6 = dis_P6     #not p6 
 
         self.dis_P5 = dis_P5
 
@@ -753,12 +753,12 @@ class ProposalNetwork_DA(nn.Module):
         """
         if domain_target:
             #loss_p7 = self.dis_P7(f['p7'], 1.0,_lambdas['p7'], domain='target')     #not p7 
-            #loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
+            loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
             loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='target') 
             loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
-            proposal_losses = {"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
+            proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             proposals = {}
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
@@ -768,7 +768,7 @@ class ProposalNetwork_DA(nn.Module):
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
             #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7 
-            #loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
@@ -783,7 +783,7 @@ class ProposalNetwork_DA(nn.Module):
         proposal_losses["loss_p3"] = loss_p3
         proposal_losses["loss_p4"] = loss_p4
         proposal_losses["loss_p5"] = loss_p5
-        #proposal_losses["loss_p6"] = loss_p6    #not p6 
+        proposal_losses["loss_p6"] = loss_p6    #not p6 
         #proposal_losses["loss_p7"] = loss_p7     #not p7 
 
         return proposals, proposal_losses  
@@ -802,7 +802,7 @@ class ProposalNetwork_DA(nn.Module):
             _lambdas['p3']=0.01 #0.5
             _lambdas['p4']=0.01#0.5
             _lambdas['p5']=0.01 #0.5
-            #_lambdas['p6']=0.01#0.1    #not p6 
+            _lambdas['p6']=0.01#0.1    #not p6 
             #_lambdas['p7']=0.01#0.1       #not p7 
             
         images = [x["image"].to(self.device) for x in batched_inputs]
