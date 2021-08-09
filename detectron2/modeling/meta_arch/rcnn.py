@@ -645,7 +645,7 @@ class FCOSDiscriminator_CA(nn.Module):
                     torch.nn.init.normal_(l.weight, std=0.01)
                     torch.nn.init.constant_(l.bias, 0)
 
-        self.grad_reverse = GradientReversal(grad_reverse_lambda)
+        self.grad_reverse = GradReverse(grad_reverse_lambda)
         self.loss_fn = nn.BCEWithLogitsLoss()
         self.loss_fn_no_reduce = nn.BCEWithLogitsLoss(reduction='none')
 
@@ -882,11 +882,11 @@ class ProposalNetwork_DA(nn.Module):
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             
             #CA losses
-            #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas['p7'], domain='target')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas['p5'], domain='target') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas['p4'], domain='target') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas['p3'], domain='target')
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'], domain='target')
             #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
             proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
             #CA combine proposals
