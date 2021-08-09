@@ -828,6 +828,17 @@ class ProposalNetwork_DA(nn.Module):
 
         self.dis_P3 = dis_P3
         
+        #CA 
+        #self.dis_P7 = dis_P7_CA    #not p7 
+ 
+        self.dis_P6_CA = dis_P6_CA     #not p6 
+
+        self.dis_P5_CA = dis_P5_CA
+
+        self.dis_P4_CA = dis_P4_CA
+
+        self.dis_P3_CA = dis_P3_CA
+        
         self.proposal_generator = proposal_generator
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
@@ -869,8 +880,18 @@ class ProposalNetwork_DA(nn.Module):
             loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='target') 
             loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
+            
+            #CA losses
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas['p7'], domain='target')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas['p3'], domain='target')
             #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
             proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
+            #CA combine proposals
+            proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3,"loss_p6_CA": loss_p6_CA,"loss_p5_CA": loss_p5_CA,
+                               "loss_p4_CA": loss_p4_CA,"loss_p3_CA": loss_p3_CA}
             proposals = {}
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
@@ -884,6 +905,13 @@ class ProposalNetwork_DA(nn.Module):
             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
+            
+            #CA losses
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas['p5'], domain='source') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas['p4'], domain='source') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas['p3'], domain='source') 
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
 #                     if '.0' in name:
@@ -897,6 +925,13 @@ class ProposalNetwork_DA(nn.Module):
         proposal_losses["loss_p5"] = loss_p5
         proposal_losses["loss_p6"] = loss_p6    #not p6 
         #proposal_losses["loss_p7"] = loss_p7     #not p7 
+        
+        #CA proposals
+        proposal_losses["loss_p3_CA"] = loss_p3_CA
+        proposal_losses["loss_p4_CA"] = loss_p4_CA
+        proposal_losses["loss_p5_CA"] = loss_p5_CA
+        proposal_losses["loss_p6_CA"] = loss_p6_CA    #not p6 
+        #proposal_losses["loss_p7_CA"] = loss_p7_CA     #not p7 
 
         return proposals, proposal_losses  
     
