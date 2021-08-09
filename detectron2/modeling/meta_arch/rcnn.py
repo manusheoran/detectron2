@@ -782,6 +782,15 @@ dis_P4 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
 dis_P3 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
+dis_P7_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+
+dis_P6_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+
+dis_P5_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+
+dis_P4_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+
+dis_P3_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
     
 @META_ARCH_REGISTRY.register()
 class ProposalNetwork_DA(nn.Module):
