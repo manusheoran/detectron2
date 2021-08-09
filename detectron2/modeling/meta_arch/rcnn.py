@@ -907,11 +907,11 @@ class ProposalNetwork_DA(nn.Module):
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
             #CA losses
-            #loss_p7_CA = self.dis_P7_CA(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas['p5'], domain='source') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas['p4'], domain='source') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas['p3'], domain='source') 
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 0.0,_lambdas_CA['p7'], domain='source')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'], domain='source')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'], domain='source') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'], domain='source') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'], domain='source') 
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
 #                     if '.0' in name:
@@ -950,7 +950,14 @@ class ProposalNetwork_DA(nn.Module):
             _lambdas['p4']=0.01#0.5
             _lambdas['p5']=0.01 #0.5
             _lambdas['p6']=0.01#0.1    #not p6 
-            #_lambdas['p7']=0.01#0.1       #not p7 
+            #_lambdas['p7']=0.01#0.1       #not p7
+            
+            #CA lambdas
+            _lambdas_CA['p3']=0.02 #0.5
+            _lambdas_CA['p4']=0.02#0.5
+            _lambdas_CA['p5']=0.02 #0.5
+            _lambdas_CA['p6']=0.02#0.1    #not p6 
+            #_lambdas_CA['p7']=0.02#0.1       #not p7
             
         images = [x["image"].to(self.device) for x in batched_inputs]
         images = [(x - self.pixel_mean) / self.pixel_std for x in images]
