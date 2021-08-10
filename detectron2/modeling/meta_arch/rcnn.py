@@ -645,7 +645,7 @@ class FCOSDiscriminator_CA(nn.Module):
                     torch.nn.init.normal_(l.weight, std=0.01)
                     torch.nn.init.constant_(l.bias, 0)
 
-        self.grad_reverse = GradReverse(grad_reverse_lambda)
+        #self.grad_reverse = GradReverse(grad_reverse_lambda)
         self.loss_fn = nn.BCEWithLogitsLoss()
         self.loss_fn_no_reduce = nn.BCEWithLogitsLoss(reduction='none')
 
@@ -658,7 +658,7 @@ class FCOSDiscriminator_CA(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, score_map=None, domain='source'):
+    def forward(self, feature, target, _lambda_CA, score_map=None, domain='source'):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
@@ -678,10 +678,10 @@ class FCOSDiscriminator_CA(nn.Module):
         # Center-aware loss (w/ GRL)
         if self.center_aware_type == 'ca_loss':
             if self.grl_applied_domain == 'both':
-                feature = self.grad_reverse(feature)
+                feature = GradReverse.apply( feature,_lambda_CA )
             elif self.grl_applied_domain == 'target':
                 if domain == 'target':
-                    feature = self.grad_reverse(feature)
+                    feature = GradReverse.apply( feature,_lambda_CA )
 
             # Forward
             x = self.dis_tower(feature)
@@ -695,10 +695,10 @@ class FCOSDiscriminator_CA(nn.Module):
         # Center-aware feature (w/ GRL)
         elif self.center_aware_type == 'ca_feature':
             if self.grl_applied_domain == 'both':
-                feature = self.grad_reverse(atten_map * feature)
+                feature = GradReverse.apply(atten_map * feature,_lambda_CA )
             elif self.grl_applied_domain == 'target':
                 if domain == 'target':
-                    feature = self.grad_reverse(atten_map * feature)
+                    feature = GradReverse.apply(atten_map * feature,_lambda_CA )
 
             # Forward
             x = self.dis_tower(feature)
@@ -782,7 +782,7 @@ dis_P4 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
 dis_P3 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
-dis_P7_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
+#dis_P7_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
 
 dis_P6_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
 
@@ -918,7 +918,7 @@ class ProposalNetwork_DA(nn.Module):
 #                         print('for source',name, layer.weight.sum())
             
         #print('feature shape fp7 ', f['p7'].shape)
-        proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
+        proposals, proposal_losses, score_maps = self.proposal_generator(images, f, gt_instances)
         
         proposal_losses["loss_p3"] = loss_p3
         proposal_losses["loss_p4"] = loss_p4
@@ -1101,12 +1101,23 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             
             score_maps= self.proposal_generator(images, f, gt_instances=None)
+            
+            map_layer_to_index = {"p3": 0, "p4": 1, "p5": 2, "p6": 3, "p7": 4}
+            feature_layers = map_layer_to_index.keys()
+            m = {
+                layer: {
+                    map_type:
+                    score_maps[map_type][map_layer_to_index[layer]]
+                    for map_type in score_maps
+                }
+                for layer in feature_layers
+            }
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],score_maps['p6'], domain='target')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'],score_maps['p5'], domain='target') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'],score_maps['p4'], domain='target') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],score_maps['p3'], domain='target')
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],m['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'],m['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'],m['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],m['p3'], domain='target')
             #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
             #proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
 #             #CA combine proposals
@@ -1127,22 +1138,26 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
             proposals, proposal_losses, score_maps= self.proposal_generator(images, f, gt_instances)
-            print(type(score_maps['box_cls']),len(score_maps['box_cls']),len(score_maps['box_regression']),len(score_maps['centerness']))
+            m = {
+                layer: {
+                    map_type:
+                    score_maps[map_type][map_layer_to_index[layer]]
+                    for map_type in score_maps
+                }
+                for layer in feature_layers
+            }
             
-            for cls_lsit in score_maps['box_cls'] :
-                print(cls_lsit.shape)
-                
-            for cls_lsit in score_maps['box_regression'] :
-                print(cls_lsit.shape)
-                
-            for cls_lsit in score_maps['centerness'] :
-                print(cls_lsit.shape)
+            for layer_name in m:
+              for map_name in m[layer_name]:
+                print(layer_name, map_name, type(m[layer_name][map_name]),len(m[layer_name][map_name]))
+                    
+        
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],proposals['p6'], domain='target')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'],proposals['p5'], domain='target') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'],proposals['p4'], domain='target') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],proposals['p3'], domain='target')
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'],m['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'],m['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'],m['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'],m['p3'], domain='target')
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
 #                     if '.0' in name:
