@@ -1057,7 +1057,7 @@ class ProposalNetwork_DA_CA(nn.Module):
         self.dis_P3_CA = dis_P3_CA
         
         self.proposal_generator = proposal_generator
-        self.proposal_generator_CA = proposal_generator_CA
+        #self.proposal_generator_CA = proposal_generator_CA
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
 
@@ -1067,7 +1067,7 @@ class ProposalNetwork_DA_CA(nn.Module):
         return {
             "backbone": backbone,
             "proposal_generator": build_proposal_generator(cfg, backbone.output_shape()),
-            "proposal_generator_CA": build_proposal_generator_CA(cfg, backbone.output_shape()),
+            #"proposal_generator_CA": build_proposal_generator_CA(cfg, backbone.output_shape()),
             "pixel_mean": cfg.MODEL.PIXEL_MEAN,
             "pixel_std": cfg.MODEL.PIXEL_STD,
         }
