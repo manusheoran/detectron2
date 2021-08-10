@@ -610,7 +610,7 @@ class GradReverse(torch.autograd.Function):
 
 #CA_discriminator
 class FCOSDiscriminator_CA(nn.Module):
-    def __init__(self, num_convs=2, in_channels=256, center_aware_weight=0.0, center_aware_type='ca_feature', grl_applied_domain='both'):
+    def __init__(self, num_convs=2, in_channels=256, grad_reverse_lambda=-1.0, center_aware_weight=0.0, center_aware_type='ca_feature', grl_applied_domain='both'):
         """
         Arguments:
             in_channels (int): number of channels of the input feature
@@ -645,7 +645,7 @@ class FCOSDiscriminator_CA(nn.Module):
                     torch.nn.init.normal_(l.weight, std=0.01)
                     torch.nn.init.constant_(l.bias, 0)
 
-        #self.grad_reverse = GradReverse(grad_reverse_lambda)
+        self.grad_reverse = GradReverse(grad_reverse_lambda)
         self.loss_fn = nn.BCEWithLogitsLoss()
         self.loss_fn_no_reduce = nn.BCEWithLogitsLoss(reduction='none')
 
@@ -658,7 +658,7 @@ class FCOSDiscriminator_CA(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, _lambda_CA, score_map=None, domain='source'):
+    def forward(self, feature, target, score_map=None, domain='source'):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
@@ -678,10 +678,10 @@ class FCOSDiscriminator_CA(nn.Module):
         # Center-aware loss (w/ GRL)
         if self.center_aware_type == 'ca_loss':
             if self.grl_applied_domain == 'both':
-                feature =GradReverse.apply(feature,_lambda_CA) # self.grad_reverse(feature)
+                feature = self.grad_reverse(feature)
             elif self.grl_applied_domain == 'target':
                 if domain == 'target':
-                    feature = GradReverse.apply(feature,_lambda_CA) #self.grad_reverse(feature)
+                    feature = self.grad_reverse(feature)
 
             # Forward
             x = self.dis_tower(feature)
@@ -695,10 +695,10 @@ class FCOSDiscriminator_CA(nn.Module):
         # Center-aware feature (w/ GRL)
         elif self.center_aware_type == 'ca_feature':
             if self.grl_applied_domain == 'both':
-                feature = GradReverse.apply(atten_map * feature,_lambda_CA) #self.grad_reverse(atten_map * feature)
+                feature = self.grad_reverse(atten_map * feature)
             elif self.grl_applied_domain == 'target':
                 if domain == 'target':
-                    feature = GradReverse.apply(atten_map * feature,_lambda_CA) #self.grad_reverse(atten_map * feature)
+                    feature = self.grad_reverse(atten_map * feature)
 
             # Forward
             x = self.dis_tower(feature)
@@ -760,7 +760,7 @@ class FCOSDiscriminator(nn.Module):
 
         #print('inside discri\n', target)
         if self.grl_applied_domain == 'both':
-            feature = GradReverse.apply(feature,_lambda)
+            feature = GradReverse.apply(feature,_lambda )
         elif self.grl_applied_domain == 'target':
             if domain == 'target':
                 feature = GradReverse.apply(feature, _lambda)
@@ -782,15 +782,15 @@ dis_P4 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
 dis_P3 = FCOSDiscriminator(num_convs=4, grl_applied_domain="both")#.to(device)
 
-dis_P7_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+dis_P7_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
 
-dis_P6_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+dis_P6_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
 
-dis_P5_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+dis_P5_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
 
-dis_P4_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+dis_P4_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
 
-dis_P3_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=0.2, grl_applied_domain='both')
+dis_P3_CA = FCOSDiscriminator_CA(num_convs=4, center_aware_weight=20, grl_applied_domain='both')
     
 @META_ARCH_REGISTRY.register()
 class ProposalNetwork_DA(nn.Module):
@@ -1075,7 +1075,7 @@ class ProposalNetwork_DA_CA(nn.Module):
         return self.pixel_mean.device
 
     #DA Loss function
-    def losses(self, images, f, gt_instances , _lambdas, domain_target):
+    def losses(self, images, f, gt_instances , _lambdas, _lambdas_CA, domain_target):
         """
         Args:
             anchors (list[Boxes]): a list of #feature level Boxes
@@ -1098,6 +1098,7 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             
+            proposals= self.proposal_generator_CA(images, f)
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
             loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'], domain='target')     #not p6 
