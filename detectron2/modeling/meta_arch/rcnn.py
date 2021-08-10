@@ -1057,6 +1057,7 @@ class ProposalNetwork_DA_CA(nn.Module):
         self.dis_P3_CA = dis_P3_CA
         
         self.proposal_generator = proposal_generator
+        self.proposal_generator_CA = proposal_generator_CA
         self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
         self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
 
@@ -1066,6 +1067,7 @@ class ProposalNetwork_DA_CA(nn.Module):
         return {
             "backbone": backbone,
             "proposal_generator": build_proposal_generator(cfg, backbone.output_shape()),
+            "proposal_generator_CA": build_proposal_generator_CA(cfg, backbone.output_shape()),
             "pixel_mean": cfg.MODEL.PIXEL_MEAN,
             "pixel_std": cfg.MODEL.PIXEL_STD,
         }
@@ -1101,10 +1103,10 @@ class ProposalNetwork_DA_CA(nn.Module):
             proposals= self.proposal_generator_CA(images, f)
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'], domain='target')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'], domain='target') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'], domain='target') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'], domain='target')
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],proposals['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'],proposals['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'],proposals['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],proposals['p3'], domain='target')
             #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
             #proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
 #             #CA combine proposals
@@ -1124,19 +1126,20 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
+            proposals, proposal_losses= self.proposal_generator(images, f, gt_instances)
 #             #CA losses
-            #loss_p7_CA = self.dis_P7_CA(f['p7'], 0.0,_lambdas_CA['p7'], domain='source')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'], domain='source')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'], domain='source') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'], domain='source') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'], domain='source') 
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],proposals['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'],proposals['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'],proposals['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],proposals['p3'], domain='target')
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
 #                     if '.0' in name:
 #                         print('for source',name, layer.weight.sum())
             
         #print('feature shape fp7 ', f['p7'].shape)
-        proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
+        #proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
         
         proposal_losses["loss_p3"] = loss_p3
         proposal_losses["loss_p4"] = loss_p4
@@ -1153,7 +1156,7 @@ class ProposalNetwork_DA_CA(nn.Module):
 
         return proposals, proposal_losses  
     
-    def forward(self, batched_inputs, _lambdas={}, domain_target = False ):
+    def forward(self, batched_inputs, _lambdas={}, _lambdas_CA={} , domain_target = False ):
         """
         Args:
             Same as in :class:`GeneralizedRCNN.forward`
@@ -1170,7 +1173,7 @@ class ProposalNetwork_DA_CA(nn.Module):
             _lambdas['p6']=0.01#0.1    #not p6 
             #_lambdas['p7']=0.01#0.1       #not p7
             
-            #CA lambdas
+            #CA lambdas #skipped length checking
             _lambdas_CA['p3']=0.02 #0.5
             _lambdas_CA['p4']=0.02#0.5
             _lambdas_CA['p5']=0.02 #0.5
@@ -1193,7 +1196,7 @@ class ProposalNetwork_DA_CA(nn.Module):
         else:
             gt_instances = None
         #print("interanl lambdas", _lambdas)
-        proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
+        proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, _lambdas_CA, domain_target )
         
 #         if domain_target:
 #             print('target image', images.tensor.shape, images.tensor.sum())
