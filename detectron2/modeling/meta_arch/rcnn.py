@@ -610,7 +610,7 @@ class GradReverse(torch.autograd.Function):
 
 #CA_discriminator
 class FCOSDiscriminator_CA(nn.Module):
-    def __init__(self, num_convs=2, in_channels=256, grad_reverse_lambda=-1.0, center_aware_weight=0.0, center_aware_type='ca_loss', grl_applied_domain='both'):
+    def __init__(self, num_convs=2, in_channels=256, grad_reverse_lambda=-1.0, center_aware_weight=0.0, center_aware_type='ca_feature', grl_applied_domain='both'):
         """
         Arguments:
             in_channels (int): number of channels of the input feature
