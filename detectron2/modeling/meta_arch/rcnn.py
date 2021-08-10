@@ -658,7 +658,7 @@ class FCOSDiscriminator_CA(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, _lambda_CA, score_map=None, domain='source'):
+    def forward(self, feature, target, _lambda_CA, score_map=None, domain):  
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
@@ -673,7 +673,7 @@ class FCOSDiscriminator_CA(nn.Module):
         # Normalize the center-aware map
         atten_map = (self.center_aware_weight * box_cls_map * centerness_map).sigmoid()
 
-
+        
         # Compute loss
         # Center-aware loss (w/ GRL)
         if self.center_aware_type == 'ca_loss':
@@ -1156,10 +1156,10 @@ class ProposalNetwork_DA_CA(nn.Module):
         
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'],m['p6'], domain='target')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'],m['p5'], domain='target') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'],m['p4'], domain='target') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'],m['p3'], domain='target')
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'],m['p6'], domain='source')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'],m['p5'], domain='source') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'],m['p4'], domain='source') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'],m['p3'], domain='source')
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
 #                     if '.0' in name:
