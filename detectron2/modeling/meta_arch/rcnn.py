@@ -1131,6 +1131,12 @@ class ProposalNetwork_DA_CA(nn.Module):
             
             for cls_lsit in score_maps['box_cls'] :
                 print(cls_lsit.shape)
+                
+            for cls_lsit in score_maps['box_regression'] :
+                print(cls_lsit.shape)
+                
+            for cls_lsit in score_maps['centerness'] :
+                print(cls_lsit.shape)
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
             loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],proposals['p6'], domain='target')     #not p6 
