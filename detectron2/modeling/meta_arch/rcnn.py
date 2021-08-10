@@ -1151,7 +1151,7 @@ class ProposalNetwork_DA_CA(nn.Module):
             
             for layer_name in m:
               for map_name in m[layer_name]:
-                print(layer_name, map_name, type(m[layer_name][map_name]),len(m[layer_name][map_name]))
+                print(layer_name, map_name, type(m[layer_name][map_name]),(m[layer_name][map_name].shape))
                     
         
 #             #CA losses
