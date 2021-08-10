@@ -1149,11 +1149,11 @@ class ProposalNetwork_DA_CA(nn.Module):
                 for layer in feature_layers
             }
             
-            for layer_name in m:
-              for map_name in m[layer_name]:
-                print(layer_name, map_name, type(m[layer_name][map_name]),(m[layer_name][map_name].shape))
+#             for layer_name in m:
+#               for map_name in m[layer_name]:
+#                 print(layer_name, map_name, type(m[layer_name][map_name]),(m[layer_name][map_name].shape))
                     
-            print(type(f), type(_lambdas_CA), type(m) )
+#             print(type(f), type(_lambdas_CA), type(m) )
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
             loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'],m['p6'], domain='source')     #not p6 
