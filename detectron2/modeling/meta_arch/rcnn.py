@@ -1138,6 +1138,8 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
             proposals, proposal_losses, score_maps= self.proposal_generator(images, f, gt_instances)
+            map_layer_to_index = {"p3": 0, "p4": 1, "p5": 2, "p6": 3, "p7": 4}
+            feature_layers = map_layer_to_index.keys()
             m = {
                 layer: {
                     map_type:
