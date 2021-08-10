@@ -19,7 +19,7 @@ from ..proposal_generator import build_proposal_generator
 from ..roi_heads import build_roi_heads
 from .build import META_ARCH_REGISTRY
 
-__all__ = ["GeneralizedRCNN", "ProposalNetwork", "ProposalNetwork1", "ProposalNetwork_DA"]
+__all__ = ["GeneralizedRCNN", "ProposalNetwork", "ProposalNetwork1", "ProposalNetwork_DA", "ProposalNetwork_DA_CA"]
 
 
 class AugmentedConv(nn.Module):
@@ -1009,4 +1009,222 @@ class ProposalNetwork_DA(nn.Module):
         return processed_results
 
    
+@META_ARCH_REGISTRY.register()
+class ProposalNetwork_DA_CA(nn.Module):
+    """
+    A meta architecture that only predicts object proposals.
+    """
+
+    @configurable
+    def __init__(
+        self,
+        *,
+        backbone: Backbone,
+        proposal_generator: nn.Module,
+        pixel_mean: Tuple[float],
+        pixel_std: Tuple[float],
+    ):
+        """
+        Args:
+            backbone: a backbone module, must follow detectron2's backbone interface
+            proposal_generator: a module that generates proposals using backbone features
+            pixel_mean, pixel_std: list or tuple with #channels element, representing
+                the per-channel mean and std to be used to normalize the input image
+        """
+        super().__init__()
+        self.backbone = backbone
+        
+        #DA FPN Layers :
+        #self.dis_P7 = dis_P7    #not p7 
+ 
+        self.dis_P6 = dis_P6     #not p6 
+
+        self.dis_P5 = dis_P5
+
+        self.dis_P4 = dis_P4
+
+        self.dis_P3 = dis_P3
+        
+#         #CA 
+        #self.dis_P7 = dis_P7_CA    #not p7 
+ 
+        self.dis_P6_CA = dis_P6_CA     #not p6 
+
+        self.dis_P5_CA = dis_P5_CA
+
+        self.dis_P4_CA = dis_P4_CA
+
+        self.dis_P3_CA = dis_P3_CA
+        
+        self.proposal_generator = proposal_generator
+        self.register_buffer("pixel_mean", torch.tensor(pixel_mean).view(-1, 1, 1), False)
+        self.register_buffer("pixel_std", torch.tensor(pixel_std).view(-1, 1, 1), False)
+
+    @classmethod
+    def from_config(cls, cfg):
+        backbone = build_backbone(cfg)
+        return {
+            "backbone": backbone,
+            "proposal_generator": build_proposal_generator(cfg, backbone.output_shape()),
+            "pixel_mean": cfg.MODEL.PIXEL_MEAN,
+            "pixel_std": cfg.MODEL.PIXEL_STD,
+        }
+
+    @property
+    def device(self):
+        return self.pixel_mean.device
+
+    #DA Loss function
+    def losses(self, images, f, gt_instances , _lambdas, domain_target):
+        """
+        Args:
+            anchors (list[Boxes]): a list of #feature level Boxes
+            gt_labels, gt_boxes: see output of :meth:`RetinaNet.label_anchors`.
+                Their shapes are (N, R) and (N, R, 4), respectively, where R is
+                the total number of anchors across levels, i.e. sum(Hi x Wi x Ai)
+            pred_logits, pred_anchor_deltas: both are list[Tensor]. Each element in the
+                list corresponds to one level and has shape (N, Hi * Wi * Ai, K or 4).
+                Where K is the number of classes used in `pred_logits`.
+        Returns:
+            dict[str, Tensor]:
+                mapping from a named loss to a scalar tensor
+                storing the loss. Used during training only. The dict keys are:
+                "loss_cls" and "loss_box_reg"
+        """
+        if domain_target:
+            #loss_p7 = self.dis_P7(f['p7'], 1.0,_lambdas['p7'], domain='target')     #not p7 
+            loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
+            loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='target') 
+            loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
+            loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
+            
+#             #CA losses
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'], domain='target')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'], domain='target') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'], domain='target') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'], domain='target')
+            #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
+            #proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
+#             #CA combine proposals
+            proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3,"loss_p6_CA": loss_p6_CA,"loss_p5_CA": loss_p5_CA,
+                               "loss_p4_CA": loss_p4_CA,"loss_p3_CA": loss_p3_CA}
+            proposals = {}
+#             for name, layer in self.dis_P3.named_modules():
+#                 if isinstance(layer, nn.Conv2d):
+#                     if '.0' in name:
+#                         print('for target',name, layer.weight.sum())
+            return proposals, proposal_losses
+            #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
+        else:
+            #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
+            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
+            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
+            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
+            
+#             #CA losses
+            #loss_p7_CA = self.dis_P7_CA(f['p7'], 0.0,_lambdas_CA['p7'], domain='source')     #not p7 
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'], domain='source')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'], domain='source') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'], domain='source') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'], domain='source') 
+#             for name, layer in self.dis_P3.named_modules():
+#                 if isinstance(layer, nn.Conv2d):
+#                     if '.0' in name:
+#                         print('for source',name, layer.weight.sum())
+            
+        #print('feature shape fp7 ', f['p7'].shape)
+        proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
+        
+        proposal_losses["loss_p3"] = loss_p3
+        proposal_losses["loss_p4"] = loss_p4
+        proposal_losses["loss_p5"] = loss_p5
+        proposal_losses["loss_p6"] = loss_p6    #not p6 
+        #proposal_losses["loss_p7"] = loss_p7     #not p7 
+        
+#         #CA proposals
+        proposal_losses["loss_p3_CA"] = loss_p3_CA
+        proposal_losses["loss_p4_CA"] = loss_p4_CA
+        proposal_losses["loss_p5_CA"] = loss_p5_CA
+        proposal_losses["loss_p6_CA"] = loss_p6_CA    #not p6 
+        #proposal_losses["loss_p7_CA"] = loss_p7_CA     #not p7 
+
+        return proposals, proposal_losses  
+    
+    def forward(self, batched_inputs, _lambdas={}, domain_target = False ):
+        """
+        Args:
+            Same as in :class:`GeneralizedRCNN.forward`
+        Returns:
+            list[dict]:
+                Each dict is the output for one input image.
+                The dict contains one key "proposals" whose value is a
+                :class:`Instances` with keys "proposal_boxes" and "objectness_logits".
+        """
+        if len(_lambdas)==0:
+            _lambdas['p3']=0.01 #0.5
+            _lambdas['p4']=0.01#0.5
+            _lambdas['p5']=0.01 #0.5
+            _lambdas['p6']=0.01#0.1    #not p6 
+            #_lambdas['p7']=0.01#0.1       #not p7
+            
+            #CA lambdas
+            _lambdas_CA['p3']=0.02 #0.5
+            _lambdas_CA['p4']=0.02#0.5
+            _lambdas_CA['p5']=0.02 #0.5
+            _lambdas_CA['p6']=0.02#0.1    #not p6 
+            #_lambdas_CA['p7']=0.02#0.1       #not p7
+            
+        images = [x["image"].to(self.device) for x in batched_inputs]
+        images = [(x - self.pixel_mean) / self.pixel_std for x in images]
+        images = ImageList.from_tensors(images, self.backbone.size_divisibility)
+        #print('input shape', images.tensor.shape)
+        features = self.backbone(images.tensor)
+        
+        if "instances" in batched_inputs[0]:
+            gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
+        elif "targets" in batched_inputs[0]:
+            log_first_n(
+                logging.WARN, "'targets' in the model inputs is now renamed to 'instances'!", n=10
+            )
+            gt_instances = [x["targets"].to(self.device) for x in batched_inputs]
+        else:
+            gt_instances = None
+        #print("interanl lambdas", _lambdas)
+        proposals, proposal_losses = self.losses(images, features, gt_instances , _lambdas, domain_target )
+        
+#         if domain_target:
+#             print('target image', images.tensor.shape, images.tensor.sum())
+#             print('for target p3 and p7 sum', features['p3'].sum(), features['p7'].sum() )
+#             print('len of proposals for target', len(proposals))
+            
+#         if not domain_target:
+#             print('source image', images.tensor.shape, images.tensor.sum())
+#             print('for source p3 and p7 sum', features['p3'].sum() , features['p7'].sum() )
+#             print('len of proposals for sourec', len(proposals))
+
+        if "instances" in batched_inputs[0]:
+            gt_instances = [x["instances"].to(self.device) for x in batched_inputs]
+        
+        
+        #proposals, proposal_losses = self.proposal_generator(images, features, gt_instances)
+        #print(proposals)
+        # In training, the proposals are not useful at all but we generate them anyway.
+        # This makes RPN-only models about 5% slower.
+        if self.training:
+            return proposal_losses
+        #print("\n running after training:")
+        processed_results = []
+        for results_per_image, input_per_image, image_size in zip(
+            proposals, batched_inputs, images.image_sizes
+        ):
+            height = input_per_image.get("height", image_size[0])
+            width = input_per_image.get("width", image_size[1])
+            r = detector_postprocess(results_per_image, height, width)
+            processed_results.append({"proposals": r})
+        return processed_results
+
+   
+
 
