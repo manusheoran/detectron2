@@ -20,6 +20,7 @@ from .meta_arch import (
     ProposalNetwork,
     ProposalNetwork1,
     ProposalNetwork_DA,
+    ProposalNetwork_DA_CA,
     RetinaNet,
     SemanticSegmentor,
     build_model,
