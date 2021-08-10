@@ -610,7 +610,7 @@ class GradReverse(torch.autograd.Function):
 
 #CA_discriminator
 class FCOSDiscriminator_CA(nn.Module):
-    def __init__(self, num_convs=2, in_channels=256, grad_reverse_lambda=-1.0, center_aware_weight=0.0, center_aware_type='ca_feature', grl_applied_domain='both'):
+    def __init__(self, num_convs=2, in_channels=256, center_aware_weight=0.0, center_aware_type='ca_feature', grl_applied_domain='both'):
         """
         Arguments:
             in_channels (int): number of channels of the input feature
@@ -645,7 +645,7 @@ class FCOSDiscriminator_CA(nn.Module):
                     torch.nn.init.normal_(l.weight, std=0.01)
                     torch.nn.init.constant_(l.bias, 0)
 
-        self.grad_reverse = GradReverse(grad_reverse_lambda)
+        #self.grad_reverse = GradReverse(grad_reverse_lambda)
         self.loss_fn = nn.BCEWithLogitsLoss()
         self.loss_fn_no_reduce = nn.BCEWithLogitsLoss(reduction='none')
 
@@ -658,7 +658,7 @@ class FCOSDiscriminator_CA(nn.Module):
         self.grl_applied_domain = grl_applied_domain
 
 
-    def forward(self, feature, target, score_map=None, domain='source'):
+    def forward(self, feature, target, _lambda_CA, score_map=None, domain='source'):
         assert target == 0 or target == 1 or target == 0.1 or target == 0.9
         assert domain == 'source' or domain == 'target'
 
@@ -678,10 +678,10 @@ class FCOSDiscriminator_CA(nn.Module):
         # Center-aware loss (w/ GRL)
         if self.center_aware_type == 'ca_loss':
             if self.grl_applied_domain == 'both':
-                feature = self.grad_reverse(feature)
+                feature =GradReverse.apply(feature,_lambda_CA) # self.grad_reverse(feature)
             elif self.grl_applied_domain == 'target':
                 if domain == 'target':
-                    feature = self.grad_reverse(feature)
+                    feature = GradReverse.apply(feature,_lambda_CA) #self.grad_reverse(feature)
 
             # Forward
             x = self.dis_tower(feature)
@@ -695,10 +695,10 @@ class FCOSDiscriminator_CA(nn.Module):
         # Center-aware feature (w/ GRL)
         elif self.center_aware_type == 'ca_feature':
             if self.grl_applied_domain == 'both':
-                feature = self.grad_reverse(atten_map * feature)
+                feature = GradReverse.apply(atten_map * feature,_lambda_CA) #self.grad_reverse(atten_map * feature)
             elif self.grl_applied_domain == 'target':
                 if domain == 'target':
-                    feature = self.grad_reverse(atten_map * feature)
+                    feature = GradReverse.apply(atten_map * feature,_lambda_CA) #self.grad_reverse(atten_map * feature)
 
             # Forward
             x = self.dis_tower(feature)
@@ -760,7 +760,7 @@ class FCOSDiscriminator(nn.Module):
 
         #print('inside discri\n', target)
         if self.grl_applied_domain == 'both':
-            feature = GradReverse.apply(feature,_lambda )
+            feature = GradReverse.apply(feature,_lambda)
         elif self.grl_applied_domain == 'target':
             if domain == 'target':
                 feature = GradReverse.apply(feature, _lambda)
