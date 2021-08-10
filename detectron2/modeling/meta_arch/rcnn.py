@@ -1100,7 +1100,7 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             
-            proposals= self.proposal_generator_CA(images, f)
+            proposals= self.proposal_generator(images, f, gt_instances=None)
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 1.0,_lambdas_CA['p7'], domain='target')     #not p7 
             loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],proposals['p6'], domain='target')     #not p6 
