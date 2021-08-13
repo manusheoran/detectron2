@@ -16,7 +16,7 @@ from detectron2.utils.logger import log_first_n
 from ..backbone import Backbone, build_backbone
 from ..postprocessing import detector_postprocess
 from ..proposal_generator import build_proposal_generator
-from ..roi_heads import build_roi_heads
+from ..roi_heads import build_roi_heads    
 from .build import META_ARCH_REGISTRY
 
 __all__ = ["GeneralizedRCNN", "ProposalNetwork", "ProposalNetwork1", "ProposalNetwork_DA", "ProposalNetwork_DA_CA"]
@@ -766,6 +766,8 @@ class FCOSDiscriminator(nn.Module):
                 feature = GradReverse.apply(feature, _lambda)
         x = self.dis_tower(feature)
         x = self.cls_logits(x)
+        
+        print(x.shape, np.sum(x))
 
         target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
         loss = self.loss_fn(x, target)
