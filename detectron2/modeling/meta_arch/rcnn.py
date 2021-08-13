@@ -703,7 +703,8 @@ class FCOSDiscriminator_CA(nn.Module):
             # Forward
             x = self.dis_tower(feature)
             x = self.cls_logits(x)
-
+            print('for CA layer')
+            print(x.shape, type(x))
             target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
             loss = self.loss_fn(x, target)
 
@@ -767,7 +768,8 @@ class FCOSDiscriminator(nn.Module):
         x = self.dis_tower(feature)
         x = self.cls_logits(x)
         
-        print(x.shape, np.sum(x))
+        print('for GA layer')
+        print(x.shape, type(x))
 
         target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
         loss = self.loss_fn(x, target)
