@@ -703,10 +703,11 @@ class FCOSDiscriminator_CA(nn.Module):
             # Forward
             x = self.dis_tower(feature)
             x = self.cls_logits(x)
-            print('for CA layer')
-            print(x.shape, type(x))
+            
             target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
             loss = self.loss_fn(x, target)
+            print('for CA layer')
+            print(x.shape, x.sum(), loss)
 
         return loss
     
@@ -767,12 +768,12 @@ class FCOSDiscriminator(nn.Module):
                 feature = GradReverse.apply(feature, _lambda)
         x = self.dis_tower(feature)
         x = self.cls_logits(x)
-        
-        print('for GA layer')
-        print(x.shape, type(x))
-
+       
         target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
         loss = self.loss_fn(x, target)
+        
+        print('for GA layer')
+        print(x.shape, x.sum(), loss)
 
         return loss
 
