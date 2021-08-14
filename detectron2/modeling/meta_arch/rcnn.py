@@ -899,7 +899,7 @@ class ProposalNetwork_DA(nn.Module):
 
             
         #print('feature shape fp7 ', f['p7'].shape)
-          proposals, proposal_losses, score_maps = self.proposal_generator(images, f, gt_instances)
+        proposals, proposal_losses, score_maps = self.proposal_generator(images, f, gt_instances)
         
 #         proposal_losses["loss_p3"] = loss_p3                # no da
 #         proposal_losses["loss_p4"] = loss_p4
