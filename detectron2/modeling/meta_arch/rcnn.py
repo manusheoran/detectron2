@@ -889,8 +889,8 @@ class ProposalNetwork_DA(nn.Module):
 #                         print('for target',name, layer.weight.sum())
             return proposals, proposal_losses
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
-        else:
-#             #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7                 # no da
+#         else:                                                                                         #no da   
+#             #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7                 
 #             loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
 #             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
 #             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
@@ -899,7 +899,7 @@ class ProposalNetwork_DA(nn.Module):
 
             
         #print('feature shape fp7 ', f['p7'].shape)
-        proposals, proposal_losses, score_maps = self.proposal_generator(images, f, gt_instances)
+          proposals, proposal_losses, score_maps = self.proposal_generator(images, f, gt_instances)
         
 #         proposal_losses["loss_p3"] = loss_p3                # no da
 #         proposal_losses["loss_p4"] = loss_p4
