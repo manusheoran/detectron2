@@ -1005,16 +1005,16 @@ class ProposalNetwork_DA_CA(nn.Module):
         super().__init__()
         self.backbone = backbone
         
-#         #DA FPN Layers :       #no GA layer
-#         #self.dis_P7 = dis_P7    #not p7 
+        #DA FPN Layers :       #no GA layer
+        #self.dis_P7 = dis_P7    #not p7 
  
-#         self.dis_P6 = dis_P6     #not p6 
+        self.dis_P6 = dis_P6     #not p6 
 
-#         self.dis_P5 = dis_P5
+        self.dis_P5 = dis_P5
 
-#         self.dis_P4 = dis_P4
+        self.dis_P4 = dis_P4
 
-#         self.dis_P3 = dis_P3
+        self.dis_P3 = dis_P3
         
 #         #CA 
         #self.dis_P7 = dis_P7_CA    #not p7 
@@ -1065,11 +1065,11 @@ class ProposalNetwork_DA_CA(nn.Module):
                 "loss_cls" and "loss_box_reg"
         """
         if domain_target:
-#             #loss_p7 = self.dis_P7(f['p7'], 1.0,_lambdas['p7'], domain='target')     #not p7    #no GA layer
-#             loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
-#             loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='target') 
-#             loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
-#             loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
+            #loss_p7 = self.dis_P7(f['p7'], 1.0,_lambdas['p7'], domain='target')     #not p7    #no GA layer
+            loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='target')     #not p6 
+            loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='target') 
+            loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='target') 
+            loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='target') 
             
             score_maps= self.proposal_generator(images, f, gt_instances=None)
             
@@ -1091,10 +1091,10 @@ class ProposalNetwork_DA_CA(nn.Module):
             loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],m['p3'], domain='target')
             #proposal_losses = {"loss_p7": loss_p7,"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}      #not p7     #not p6 
             #proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3}
-#             #CA combine proposals  # no GA layer
-#             proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3,"loss_p6_CA": loss_p6_CA,"loss_p5_CA": loss_p5_CA,
-#                                "loss_p4_CA": loss_p4_CA,"loss_p3_CA": loss_p3_CA}
-            proposal_losses = {"loss_p6_CA": loss_p6_CA,"loss_p5_CA": loss_p5_CA,"loss_p4_CA": loss_p4_CA,"loss_p3_CA": loss_p3_CA}
+            #CA combine proposals  # no GA layer
+            proposal_losses = {"loss_p6": loss_p6,"loss_p5": loss_p5,"loss_p4": loss_p4,"loss_p3": loss_p3,"loss_p6_CA": loss_p6_CA,"loss_p5_CA": loss_p5_CA,
+                               "loss_p4_CA": loss_p4_CA,"loss_p3_CA": loss_p3_CA}
+            #proposal_losses = {"loss_p6_CA": loss_p6_CA,"loss_p5_CA": loss_p5_CA,"loss_p4_CA": loss_p4_CA,"loss_p3_CA": loss_p3_CA}
             proposals = {}
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
@@ -1103,11 +1103,11 @@ class ProposalNetwork_DA_CA(nn.Module):
             return proposals, proposal_losses
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
-#             #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7   # no GA layer
-#             loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
-#             loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
-#             loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
-#             loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
+            #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7   # no GA layer
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
+            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
+            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
+            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
             proposals, proposal_losses, score_maps= self.proposal_generator(images, f, gt_instances)
             map_layer_to_index = {"p3": 0, "p4": 1, "p5": 2, "p6": 3, "p7": 4}
@@ -1140,11 +1140,11 @@ class ProposalNetwork_DA_CA(nn.Module):
         #print('feature shape fp7 ', f['p7'].shape)
         #proposals, proposal_losses = self.proposal_generator(images, f, gt_instances)
         
-#         proposal_losses["loss_p3"] = loss_p3        # no GA layer
-#         proposal_losses["loss_p4"] = loss_p4
-#         proposal_losses["loss_p5"] = loss_p5
-#         proposal_losses["loss_p6"] = loss_p6    #not p6 
-#         #proposal_losses["loss_p7"] = loss_p7     #not p7 
+        proposal_losses["loss_p3"] = loss_p3        # no GA layer
+        proposal_losses["loss_p4"] = loss_p4
+        proposal_losses["loss_p5"] = loss_p5
+        proposal_losses["loss_p6"] = loss_p6    #not p6 
+        #proposal_losses["loss_p7"] = loss_p7     #not p7 
         
 #         #CA proposals
         proposal_losses["loss_p3_CA"] = loss_p3_CA
