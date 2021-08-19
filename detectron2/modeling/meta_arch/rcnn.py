@@ -977,7 +977,7 @@ class ProposalNetwork_DA(nn.Module):
             width = input_per_image.get("width", image_size[1])
             r = detector_postprocess(results_per_image, height, width)
             processed_results.append({"proposals": r})
-        return processed_results
+        return processed_results, features
 
    
 @META_ARCH_REGISTRY.register()
