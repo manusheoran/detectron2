@@ -706,8 +706,8 @@ class FCOSDiscriminator_CA(nn.Module):
             
             target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
             loss = self.loss_fn(x, target)
-#             print('for CA layer')
-#             print(x.shape, x.sum(), loss)
+            print('for CA layer')
+            print('x and target shape and sum: ',x.shape,target.shape, x.sum(),target.sum(), 'loss',loss)
 
         return loss
     
@@ -772,8 +772,8 @@ class FCOSDiscriminator(nn.Module):
         target = torch.full(x.shape, target, dtype=torch.float, device=x.device)
         loss = self.loss_fn(x, target)
         
-#         print('for GA layer')
-#         print(x.shape, x.sum(), loss)
+        print('for GA layer')
+        print('x and target shape and sum: ',x.shape,target.shape, x.sum(),target.sum(), 'loss',loss)
 
         return loss
 
