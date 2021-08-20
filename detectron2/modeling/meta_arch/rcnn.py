@@ -1104,10 +1104,10 @@ class ProposalNetwork_DA_CA(nn.Module):
             #return {"loss_r3": loss_res3, "loss_r4": loss_res4, "loss_r5": loss_res5}
         else:
             #loss_p7 = self.dis_P7(f['p7'], 0.0,_lambdas['p7'], domain='source')     #not p7   # no GA layer
-            loss_p6 = self.dis_P6(f['p6'], 1.0, _lambdas['p6'], domain='source')     #not p6 
-            loss_p5 = self.dis_P5(f['p5'], 1.0, _lambdas['p5'], domain='source') 
-            loss_p4 = self.dis_P4(f['p4'], 1.0, _lambdas['p4'], domain='source') 
-            loss_p3 = self.dis_P3(f['p3'], 1.0, _lambdas['p3'], domain='source') 
+            loss_p6 = self.dis_P6(f['p6'], 0.0, _lambdas['p6'], domain='source')     #not p6 
+            loss_p5 = self.dis_P5(f['p5'], 0.0, _lambdas['p5'], domain='source') 
+            loss_p4 = self.dis_P4(f['p4'], 0.0, _lambdas['p4'], domain='source') 
+            loss_p3 = self.dis_P3(f['p3'], 0.0, _lambdas['p3'], domain='source') 
             
             proposals, proposal_losses, score_maps= self.proposal_generator(images, f, gt_instances)
             map_layer_to_index = {"p3": 0, "p4": 1, "p5": 2, "p6": 3, "p7": 4}
@@ -1128,10 +1128,10 @@ class ProposalNetwork_DA_CA(nn.Module):
 #             print(type(f), type(_lambdas_CA), type(m) )
 #             #CA losses
             #loss_p7_CA = self.dis_P7_CA(f['p7'], 0.0,_lambdas_CA['p7'], domain='target')     #not p7 
-            loss_p6_CA = self.dis_P6_CA(f['p6'], 1.0, _lambdas_CA['p6'],m['p6'], domain='source')     #not p6 
-            loss_p5_CA = self.dis_P5_CA(f['p5'], 1.0, _lambdas_CA['p5'],m['p5'], domain='source') 
-            loss_p4_CA = self.dis_P4_CA(f['p4'], 1.0, _lambdas_CA['p4'],m['p4'], domain='source') 
-            loss_p3_CA = self.dis_P3_CA(f['p3'], 1.0, _lambdas_CA['p3'],m['p3'], domain='source')
+            loss_p6_CA = self.dis_P6_CA(f['p6'], 0.0, _lambdas_CA['p6'],m['p6'], domain='source')     #not p6 
+            loss_p5_CA = self.dis_P5_CA(f['p5'], 0.0, _lambdas_CA['p5'],m['p5'], domain='source') 
+            loss_p4_CA = self.dis_P4_CA(f['p4'], 0.0, _lambdas_CA['p4'],m['p4'], domain='source') 
+            loss_p3_CA = self.dis_P3_CA(f['p3'], 0.0, _lambdas_CA['p3'],m['p3'], domain='source')
 #             for name, layer in self.dis_P3.named_modules():
 #                 if isinstance(layer, nn.Conv2d):
 #                     if '.0' in name:
